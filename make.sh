@@ -1,0 +1,59 @@
+#!/bin/sh
+
+ROOT=`pwd`
+TMP=/tmp/os64-tools/
+XCC=gcc
+XCFLAGS="-Wno-implicit-int -Wno-implicit-function-declaration -fno-builtin"
+IMAGEBLKS=25600 # target disk size in 4K blocks (100MB)
+
+############################################################
+
+echo ........................................ building cross tools
+
+rm -rf $TMP
+mkdir -p $TMP
+
+$XCC $XCFLAGS -o $TMP/as bin/as/*.c
+
+$XCC $XCFLAGS -o $TMP/cc \
+	-DBINDIR=\"$TMP\" \
+	-DINCDIR=\"$ROOT/include\" \
+	-DLIBDIR=\"$ROOT/lib\" \
+	bin/cc.c
+
+$XCC $XCFLAGS -o $TMP/cc1 bin/cc1/*.c
+$XCC $XCFLAGS -o $TMP/cpp bin/cpp/*.c
+$XCC $XCFLAGS -o $TMP/ld bin/ld.c
+$XCC $XCFLAGS -o $TMP/mkboot bin/mkboot.c
+$XCC $XCFLAGS -o $TMP/mkfs bin/mkfs.c
+
+AS=$TMP/as
+CC=$TMP/cc
+LD=$TMP/ld
+MKBOOT=$TMP/mkboot
+MKFS=$TMP/mkfs
+
+############################################################
+
+echo ........................................ building kernel
+
+$AS -o kernel/locore.o -l kernel/locore.lst kernel/locore.s
+$CC -c kernel/main.c
+
+$LD -o kernel/kernel -e start -b 0x1000 \
+	kernel/locore.o kernel/main.o
+
+############################################################
+
+echo ........................................ building boot block
+
+$AS -o boot.o boot.s
+$LD -o boot -r -b 0 boot.o
+dd if=boot of=boot.bin bs=4k count=1
+rm boot.o boot
+
+echo ........................................ building disk image
+
+dd if=/dev/zero of=image bs=4K count=$IMAGEBLKS # 100 MB disk
+$MKFS image $IMAGEBLKS proto
+$MKBOOT -b boot.bin image
