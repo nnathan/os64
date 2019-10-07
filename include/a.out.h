@@ -50,4 +50,8 @@ struct exec
 
 #define A_MAGIC 0x87CD1EEB      /* $87CD SYNC: homage to OS-9/6809 */
 
+#ifdef _KERNEL
+extern struct exec exec;	/* kernel's a.out header */
+#endif
+
 #endif /* _A_OUT_H */

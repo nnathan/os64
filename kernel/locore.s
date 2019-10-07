@@ -8,6 +8,9 @@
 .bits 16
 
 KERNEL_ADDRESS=0x1000   ; address of a.out header (@ 4K)
+.global _exec		; give it a name so the kernel can find it
+_exec=KERNEL_ADDRESS
+
 BOOTCMD_SZ=128          ; length of bootcmd[] buffer
 _bootcmd=0x540          ; BOOTCMD_SZ bytes - must agree with boot!
 
