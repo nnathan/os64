@@ -26,12 +26,14 @@ $XCC $XCFLAGS -o $TMP/cpp bin/cpp/*.c
 $XCC $XCFLAGS -o $TMP/ld bin/ld.c
 $XCC $XCFLAGS -o $TMP/mkboot bin/mkboot.c
 $XCC $XCFLAGS -o $TMP/mkfs bin/mkfs.c
+$XCC $XCFLAGS -o $TMP/obj bin/obj.c
 
 AS=$TMP/as
 CC=$TMP/cc
 LD=$TMP/ld
 MKBOOT=$TMP/mkboot
 MKFS=$TMP/mkfs
+OBJ=$TMP/obj
 
 ############################################################
 
@@ -44,6 +46,8 @@ $CC -D_KERNEL -c kernel/cons.c
 
 $LD -o kernel/kernel -e start -b 0x1000 \
 	kernel/locore.o kernel/lib.o kernel/main.o kernel/cons.o
+
+$OBJ -s kernel/kernel >kernel/kernel.map
 
 ############################################################
 
