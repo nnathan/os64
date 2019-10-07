@@ -38,10 +38,12 @@ MKFS=$TMP/mkfs
 echo ........................................ building kernel
 
 $AS -o kernel/locore.o -l kernel/locore.lst kernel/locore.s
-$CC -c kernel/main.c
+$AS -o kernel/lib.o -l kernel/lib.lst kernel/lib.s
+$CC -D_KERNEL -c kernel/main.c
+$CC -D_KERNEL -c kernel/cons.c
 
 $LD -o kernel/kernel -e start -b 0x1000 \
-	kernel/locore.o kernel/main.o
+	kernel/locore.o kernel/lib.o kernel/main.o kernel/cons.o
 
 ############################################################
 

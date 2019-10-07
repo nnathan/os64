@@ -22,13 +22,17 @@
  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+#include "../include/a.out.h"
+
 main()
 {
-    short *x = (short *) 0xb8000;
-    int i;
+    cons_init();
 
-    for (i = 0; i < 2000; ++i)
-        *x++ = 0x0720;
+    printf("os/64 (compiled %s %s)\n", __DATE__, __TIME__);
+    printf("[text %d bytes, data %d bytes, bss %d bytes]\n",
+        exec.a_text, exec.a_data, exec.a_bss);
 
     for (;;) ;
 }
+
+/* vi: set ts=4 expandtab: */
