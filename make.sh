@@ -37,6 +37,12 @@ OBJ=$TMP/obj
 
 ############################################################
 
+echo ........................................ building libc
+
+$AS -o lib/libc/bzero.o -l lib/libc/bzero.lst lib/libc/bzero.s
+
+############################################################
+
 echo ........................................ building kernel
 
 $AS -o kernel/locore.o -l kernel/locore.lst kernel/locore.s
@@ -45,7 +51,8 @@ $CC -D_KERNEL -c kernel/main.c
 $CC -D_KERNEL -c kernel/cons.c
 
 $LD -o kernel/kernel -e start -b 0x1000 \
-	kernel/locore.o kernel/lib.o kernel/main.o kernel/cons.o
+	kernel/locore.o kernel/lib.o kernel/main.o kernel/cons.o \
+	lib/libc/bzero.o
 
 $OBJ -s kernel/kernel >kernel/kernel.map
 

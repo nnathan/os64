@@ -26,6 +26,8 @@
 
 main()
 {
+    bzero(((char *) &exec) + exec.a_text + exec.a_data, exec.a_bss);
+
     cons_init();
 
     printf("os/64 (compiled %s %s)\n", __DATE__, __TIME__);
