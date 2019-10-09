@@ -49,9 +49,11 @@ $AS -o kernel/locore.o -l kernel/locore.lst kernel/locore.s
 $AS -o kernel/lib.o -l kernel/lib.lst kernel/lib.s
 $CC -D_KERNEL -c kernel/main.c
 $CC -D_KERNEL -c kernel/cons.c
+$CC -D_KERNEL -c kernel/sched.c
 
 $LD -o kernel/kernel -e start -b 0x1000 \
 	kernel/locore.o kernel/lib.o kernel/main.o kernel/cons.o \
+	kernel/sched.o \
 	lib/libc/bzero.o
 
 $OBJ -s kernel/kernel >kernel/kernel.map
