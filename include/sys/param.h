@@ -1,4 +1,4 @@
-/* Copyright (c) 2018 Charles E. Youse (charles@gnuless.org). 
+/* Copyright (c) 2019 Charles E. Youse (charles@gnuless.org).
    All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -22,21 +22,20 @@
  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "../include/a.out.h"
+#ifndef _SYS_PARAM_H
+#define _SYS_PARAM_H
 
-main()
-{
-    bzero(((char *) &exec) + exec.a_text + exec.a_data, exec.a_bss);
+#define PAGE_SIZE   4096            /* bytes per page */
+#define PAGE_SHIFT  12              /* log2(PAGE_SIZE) */
 
-    cons_init();
+/* limit of physical address space: all RAM and memory-mapped I/O devices
+   must live below this physical address. this limit determines the max
+   size of pmap[], the required size of pgno_t, and the number of system
+   PML4Es, among other things. keep those in mind before increasing this.
+   note: this value will be effectively rounded down to page boundary. */
 
-    printf("os/64 (compiled %s %s)\n", __DATE__, __TIME__);
-    printf("[%d text, %d data, %d bss] @ 0x%x\n", exec.a_text, exec.a_data,
-            exec.a_bss, &exec);
+#define PHYSMAX     (128L * 1024 * 1024 * 1024)     /* 128GB */
 
-    page_init();
-
-    for (;;) ;
-}
+#endif /* _SYS_PARAM_H */
 
 /* vi: set ts=4 expandtab: */

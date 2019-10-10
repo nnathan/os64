@@ -17,4 +17,9 @@ typedef unsigned dev_t;
 #define major(dev)              (((dev) >> 16) & 0xFFFF)
 #define minor(dev)              ((dev) & 0xFFFF)
 
+typedef unsigned pgno_t;
+
+#define ADDR_TO_PGNO(addr)  ((pgno_t) (((unsigned long) addr) >> PAGE_SHIFT))
+#define PGNO_TO_ADDR(pgno)  (((unsigned long) pgno) << PAGE_SHIFT)
+
 #endif /* _SYS_TYPES_H */

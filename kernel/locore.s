@@ -14,6 +14,9 @@ _exec=KERNEL_ADDRESS
 BOOTCMD_SZ=128          ; length of bootcmd[] buffer
 _bootcmd=0x540          ; BOOTCMD_SZ bytes - must agree with boot!
 
+.global _pmap
+_pmap=0x100000		; pmap[] starts at 1MB mark
+
 ; start is the entry point recorded in the a.out header, but the 
 ; boot code just jumps blindly, so it had better be first in text.
 
@@ -99,8 +102,8 @@ check_cpu:      pushfd                  ; check for CPUID support
 ;
 
 .align 4
-.global _e820_count
-_e820_count:    .dword 0
+.global _nr_e820
+_nr_e820:    	.dword 0
 
 .align 8
 .global _e820_map
@@ -126,12 +129,12 @@ e820_loop:      mov eax, 0xe820
                 cmp eax, SMAP
                 jne e820_error
                 add di, E820_ENTRY_SIZE
-                inc dword [_e820_count]
+                inc dword [_nr_e820]
                 test ebx,ebx
                 jz warn_bios
                 jmp e820_loop
-e820_carry:     cmp dword [_e820_count], 0      ; carry can be set
-                jz e820_error          ; as long as it's not first
+e820_carry:     cmp dword [_nr_e820], 0      	; carry can be set
+                jz e820_error          		; as long as it's not first
 
 ;
 ; 4. warn the BIOS that we're heading for long mode.
@@ -539,6 +542,7 @@ spurious:       iretq
 
 .org 0x0FE0	; can't align to page boundaries with .align
 
+.global _proto_pml4
 _proto_pml4:    .qword proto_pdp + 0x03          ; R/W, P
                 .fill 4088, 0
 proto_pdp:      .qword proto_pgdir + 0x03        ; R/W, P
