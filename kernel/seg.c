@@ -1,4 +1,4 @@
-/* Copyright (c) 2018 Charles E. Youse (charles@gnuless.org). 
+/* Copyright (c) 2019 Charles E. Youse (charles@gnuless.org).
    All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -22,22 +22,13 @@
  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#include "../include/a.out.h"
 #include "../include/sys/seg.h"
 
-main()
+tss_init(tss)
+struct tss *tss;
 {
-    bzero(((char *) &exec) + exec.a_text + exec.a_data, exec.a_bss);
-    tss_init(&tss0);
-    cons_init();
-
-    printf("os/64 (compiled %s %s)\n", __DATE__, __TIME__);
-    printf("[%d text, %d data, %d bss] @ 0x%x\n", exec.a_text, exec.a_data,
-            exec.a_bss, &exec);
-
-    page_init();
-
-    for (;;) ;
+    tss->this = tss;
+    tss->iomap = 0xFFFF;    /* no I/O ops outside ring 0 */
 }
 
 /* vi: set ts=4 expandtab: */

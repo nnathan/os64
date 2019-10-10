@@ -51,10 +51,11 @@ $CC -D_KERNEL -c kernel/main.c
 $CC -D_KERNEL -c kernel/cons.c
 $CC -D_KERNEL -c kernel/page.c
 $CC -D_KERNEL -c kernel/sched.c
+$CC -D_KERNEL -c kernel/seg.c
 
 $LD -o kernel/kernel -e start -b 0x1000 \
 	kernel/locore.o kernel/lib.o kernel/main.o kernel/cons.o \
-	kernel/page.o kernel/sched.o \
+	kernel/page.o kernel/sched.o kernel/seg.o \
 	lib/libc/bzero.o
 
 $OBJ -s kernel/kernel >kernel/kernel.map

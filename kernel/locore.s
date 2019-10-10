@@ -220,14 +220,21 @@ restart64:      mov ax, 0x20                    ; kernel data (sort of)
                 mov ss, ax
                 mov es, ax
                 mov fs, ax
+
+		mov ax, word [_boot_gs]		; load per-CPU data
                 mov gs, ax
+		mov ax, word [_boot_tr]
+		ltr ax
+		jmp qword [_boot_entry]		; and enter kernel!
 
-		; XXX: determine CPU ID, select appropriate stack
-		; and load task and GS registers accordingly...
-		; for now, we assume we're on the BSP and GO!
-
+.align 8
 .global _main
-		jmp _main
+.global _boot_entry
+.global _boot_tr
+.global _boot_gs
+_boot_entry:	.qword _main
+_boot_tr:	.word 0x38
+_boot_gs:	.word 0x48
 
 ;
 ; error - report an error and halt.
@@ -312,7 +319,10 @@ test_a20_done:  pop es
 ;
 
 .align 8
-gdt:            .word 0, 0, 0, 0        ; null descriptor
+.global _gdt
+.global _gdt_free
+.global _gdt_end
+_gdt:            .word 0, 0, 0, 0        ; null descriptor
 
                 .word 0xFFFF            ; 0x08 = 32-bit code
                 .word 0
@@ -344,33 +354,22 @@ gdt:            .word 0, 0, 0, 0        ; null descriptor
                 .word 0xF200
                 .word 0
 
-                .word 0x67              ; 0x38 - 64-bit TSS selector for CPU0
+                .word 0x0FFF            ; 0x38 - 64-bit TSS selector for CPU0
                 .word tss0
                 .word 0x8900
-                .word 0, 0, 0, 0, 0
+                .word 0
+		.word 0, 0, 0, 0	; 0x40 - (TSS is double-length)
 
-gdt_ptr:        .word gdt_ptr-gdt-1
-                .dword gdt
+		.word 0x0FFC		; 0x48 - data overlap for CPU0 TSS
+		.word _tss0		; note that it's offset by 4 bytes,
+		.word 0x9200		; because a 64-bit TSS is misaligned:
+		.word 0			; this avoids awkwardness in C struct
 
-;
-; TSS for CPU0
-;
+_gdt_free:	.fill 384, 0		; 48 empty entries
+_gdt_end:
 
-.align 8
-tss0:           .dword 0
-                .qword 0                        ; RSP0
-                .qword 0                        ; RSP1
-                .qword 0                        ; RSP2
-                .qword 0
-                .qword 0                        ; IST1
-                .qword 0                        ; IST2
-                .qword 0                        ; IST3
-                .qword 0                        ; IST4
-                .qword 0                        ; IST5
-                .qword 0                        ; IST6
-                .qword 0                        ; IST7
-                .qword 0
-                .dword 0
+gdt_ptr:        .word gdt_ptr-_gdt-1
+                .dword _gdt
 
 .align 8
 idt:    ; processor-defined traps
@@ -536,11 +535,20 @@ trap:           jmp trap
 spurious:       iretq
 
 ;
+; TSS for CPU0; remember 'struct tss' is offset by 4
+;
+
+.global _tss0
+.align 8
+tss0:		.dword 0
+_tss0:		.fill 4092, 0
+
+;
 ; prototype page tables. identity-map the first 2GB here manually, and leave
 ; it to the C startup code to do the rest before it touches anything else.
 ;
 
-.org 0x0FE0	; can't align to page boundaries with .align
+.org 0x2FE0	; can't align to page boundaries with .align
 
 .global _proto_pml4
 _proto_pml4:    .qword proto_pdp + 0x03          ; R/W, P

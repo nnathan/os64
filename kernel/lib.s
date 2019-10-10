@@ -22,6 +22,18 @@
 ; OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 ; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+; offsets into 'struct tss'
+
+TSS_RSP0=0
+TSS_THIS=104
+
+; struct tss *this() - return a pointer to this CPU's TSS
+
+.global _this
+_this:          seg gs
+                mov rax, qword [TSS_THIS]
+                ret
+
 ; inb(port) - read byte from I/O port
 
 .global _inb
