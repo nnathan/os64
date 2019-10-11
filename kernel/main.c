@@ -25,6 +25,8 @@
 #include "../include/a.out.h"
 #include "../include/sys/seg.h"
 #include "../include/sys/acpi.h"
+#include "../include/sys/queue.h"
+#include "../include/sys/slab.h"
 
 main()
 {
@@ -38,6 +40,7 @@ main()
 
     page_init();
     acpi_init();
+
     panic("finished");
 }
 

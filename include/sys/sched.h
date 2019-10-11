@@ -34,6 +34,7 @@ typedef unsigned long token_t;
 #define TOKEN(x)        ((x) << 1L)     /* token builder: 0 <= x <= 63 */
 
 #define TOKEN_PMAP      TOKEN(0)        /* page allocation/deallocation */
+#define TOKEN_SLAB      TOKEN(1)        /* slab allocation/deallocation */
 
 #ifdef _KERNEL
 
