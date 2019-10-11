@@ -24,6 +24,7 @@
 
 #include "../include/a.out.h"
 #include "../include/sys/seg.h"
+#include "../include/sys/acpi.h"
 
 main()
 {
@@ -36,8 +37,8 @@ main()
             exec.a_bss, &exec);
 
     page_init();
-
-    for (;;) ;
+    acpi_init();
+    panic("finished");
 }
 
 /* vi: set ts=4 expandtab: */
