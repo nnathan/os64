@@ -28,6 +28,7 @@
 #include "../include/sys/queue.h"
 #include "../include/sys/page.h"
 #include "../include/sys/sched.h"
+#include "../include/sys/clock.h"
 #include "../include/a.out.h"
 
 /* free pages are tracked by keeping their pmap[] entries on free_pages. */
@@ -57,7 +58,7 @@ page_alloc()
     tokens = acquire(TOKEN_PMAP);
 
     while (nr_free_pages == 0)
-        sleep(&nr_free_pages, 0);
+        sleep(&time, 0);
 
     pg = LIST_FIRST(&free_pages);
     LIST_REMOVE(pg, list);
