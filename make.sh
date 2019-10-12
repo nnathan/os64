@@ -1,10 +1,13 @@
 #!/bin/sh
 
+set -e # errors are fatal
+
 ROOT=`pwd`
 TMP=/tmp/os64-tools/
 XCC=gcc
 XCFLAGS="-Wno-implicit-int -Wno-implicit-function-declaration -fno-builtin"
 IMAGEBLKS=25600 # target disk size in 4K blocks (100MB)
+CFLAGS=
 
 ############################################################
 
@@ -47,14 +50,15 @@ echo ........................................ building kernel
 
 $AS -o kernel/locore.o -l kernel/locore.lst kernel/locore.s
 $AS -o kernel/lib.o -l kernel/lib.lst kernel/lib.s
-$CC -D_KERNEL -c kernel/main.c
-$CC -D_KERNEL -c kernel/cons.c
-$CC -D_KERNEL -c kernel/page.c
-$CC -D_KERNEL -c kernel/sched.c
-$CC -D_KERNEL -c kernel/seg.c
-$CC -D_KERNEL -c kernel/acpi.c
-$CC -D_KERNEL -c kernel/clock.c
-$CC -D_KERNEL -c kernel/slab.c
+
+$CC $CFLAGS -D_KERNEL -c kernel/main.c
+$CC $CFLAGS -D_KERNEL -c kernel/cons.c
+$CC $CFLAGS -D_KERNEL -c kernel/page.c
+$CC $CFLAGS -D_KERNEL -c kernel/sched.c
+$CC $CFLAGS -D_KERNEL -c kernel/seg.c
+$CC $CFLAGS -D_KERNEL -c kernel/acpi.c
+$CC $CFLAGS -D_KERNEL -c kernel/clock.c
+$CC $CFLAGS -D_KERNEL -c kernel/slab.c
 
 $LD -o kernel/kernel -e start -b 0x1000 \
 	kernel/locore.o kernel/lib.o kernel/main.o kernel/cons.o \
