@@ -622,11 +622,15 @@ struct insn insns[] =
     { "iretd", 0, { }, 1, { 0xCF }, I_DATA_32 },
     { "iretq", 0, { }, 1, { 0xCF }, I_DATA_64 },
 
+    { "clts", 0, { }, 2, { 0x0F, 0x06 }, 0 },
     { "cpuid", 0, { }, 2, { 0x0F, 0xA2 }, 0 },
     { "pause", 0, { }, 2, { 0xF3, 0x90 }, 0 },
     { "rdmsr", 0, { }, 2, { 0x0F, 0x32 }, 0 },
     { "wrmsr", 0, { }, 2, { 0x0F, 0x30 }, 0 },
     { "sfence", 0, { }, 3, { 0x0F, 0xAE, 0xF8 }, 0 },
+
+    { "finit", 0, { }, 3, { 0x9B, 0xDB, 0xE3 }, 0 },
+    { "fninit", 0, { }, 2, { 0xDB, 0xE3 }, 0 },
 
     { "movnti", 2, { O_MEM_32 | O_I_MODRM, O_REG_32 | O_I_MIDREG }, 3, { 0x0F, 0xC3, 0 }, I_DATA_32 },
     { "movnti", 2, { O_MEM_64 | O_I_MODRM, O_REG_64 | O_I_MIDREG }, 3, { 0x0F, 0xC3, 0 }, I_DATA_64 },
