@@ -27,6 +27,103 @@
 TSS_RSP0=0
 TSS_THIS=104
 
+; offsets in 'struct proc'
+
+PROC_CR3=0
+PROC_RSP=8
+PROC_RBX=16
+PROC_RBP=24
+PROC_RSI=32
+PROC_RDI=40
+PROC_R8=48
+PROC_R9=56
+PROC_R10=64
+PROC_R11=72
+PROC_R12=80
+PROC_R13=88
+PROC_R14=96
+PROC_R15=104
+PROC_RFLAGS=112
+PROC_RIP=120
+PROC_FXSAVE=128
+
+; save(proc) struct proc *proc;
+; resume(proc) struct proc *proc;
+;
+; kernel analogs of setjmp()/longjmp() in userland.
+; save() returns 0 to the saver, and 1 when resumed.
+
+.global _save
+_save:          pop rcx                 ; RIP
+                mov rdx, qword [rsp]    ; 'proc'
+
+                mov qword [rdx, PROC_RIP], rcx
+
+                pushfq
+                pop rax
+                mov qword [rdx, PROC_RFLAGS], rax
+
+                mov qword [rdx, PROC_RBX], rbx
+                mov qword [rdx, PROC_RBP], rbp
+                mov qword [rdx, PROC_RSI], rsi
+                mov qword [rdx, PROC_RDI], rdi
+                mov qword [rdx, PROC_R8], r8
+                mov qword [rdx, PROC_R9], r9
+                mov qword [rdx, PROC_R10], r10
+                mov qword [rdx, PROC_R11], r11
+                mov qword [rdx, PROC_R12], r12
+                mov qword [rdx, PROC_R13], r13
+                mov qword [rdx, PROC_R14], r14
+                mov qword [rdx, PROC_R15], r15
+                mov qword [rdx, PROC_RSP], rsp
+
+                ; if CR0.TS is set, the FPU state does
+                ; not belong to this process: don't save.
+
+                mov rax, cr0
+                test rax, 0x08      ; CR0.TS bit
+                jnz _save_skipfp
+                fxsave qword [rdx, PROC_FXSAVE]
+
+_save_skipfp:   xor eax, eax
+                jmp rcx
+
+; resume(proc) struct proc *proc;
+
+.global _resume
+_resume:        mov rdx, qword [rsp, 8]             ; 'proc'
+
+                mov rbx, qword [rdx, PROC_RBX]
+                mov rbp, qword [rdx, PROC_RBP]
+                mov rsi, qword [rdx, PROC_RSI]
+                mov rdi, qword [rdx, PROC_RDI]
+                mov r8, qword [rdx, PROC_R8]
+                mov r9, qword [rdx, PROC_R9]
+                mov r10, qword [rdx, PROC_R10]
+                mov r11, qword [rdx, PROC_R11]
+                mov r12, qword [rdx, PROC_R12]
+                mov r13, qword [rdx, PROC_R13]
+                mov r14, qword [rdx, PROC_R14]
+                mov r15, qword [rdx, PROC_R15]
+
+                cli ; changing stacks
+
+                mov rsp, qword [rdx, PROC_RSP]
+                mov rax, qword [rdx, PROC_CR3]
+                mov cr3, rax
+
+                mov rax, qword [rdx, PROC_RFLAGS]
+                push rax
+                popfq
+
+                mov rax, cr0        ; set CR0.TS since
+                or rax, 0x08        ; the FPU state is
+                mov cr0, rax        ; now unknown.
+
+                mov rdx, qword [rdx, PROC_RIP]
+                mov eax, 1
+                jmp rdx
+
 ; struct tss *this() - return a pointer to this CPU's TSS
 
 .global _this

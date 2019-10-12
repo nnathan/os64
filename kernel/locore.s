@@ -8,14 +8,17 @@
 .bits 16
 
 KERNEL_ADDRESS=0x1000   ; address of a.out header (@ 4K)
-.global _exec		; give it a name so the kernel can find it
+.global _exec           ; give it a name so the kernel can find it
 _exec=KERNEL_ADDRESS
 
 BOOTCMD_SZ=128          ; length of bootcmd[] buffer
 _bootcmd=0x540          ; BOOTCMD_SZ bytes - must agree with boot!
 
+.global _proc0          ; must be 16-byte aligned
+_proc0=0x800
+
 .global _pmap
-_pmap=0x100000		; pmap[] starts at 1MB mark
+_pmap=0x100000          ; pmap[] starts at 1MB mark
 
 ; start is the entry point recorded in the a.out header, but the 
 ; boot code just jumps blindly, so it had better be first in text.
@@ -103,7 +106,7 @@ check_cpu:      pushfd                  ; check for CPUID support
 
 .align 4
 .global _nr_e820
-_nr_e820:    	.dword 0
+_nr_e820:       .dword 0
 
 .align 8
 .global _e820_map
@@ -133,8 +136,8 @@ e820_loop:      mov eax, 0xe820
                 test ebx,ebx
                 jz warn_bios
                 jmp e820_loop
-e820_carry:     cmp dword [_nr_e820], 0      	; carry can be set
-                jz e820_error          		; as long as it's not first
+e820_carry:     cmp dword [_nr_e820], 0         ; carry can be set
+                jz e820_error                   ; as long as it's not first
 
 ;
 ; 4. warn the BIOS that we're heading for long mode.
@@ -221,20 +224,31 @@ restart64:      mov ax, 0x20                    ; kernel data (sort of)
                 mov es, ax
                 mov fs, ax
 
-		mov ax, word [_boot_gs]		; load per-CPU data
+                ; initialize sane FPU state and mark it 'dirty'
+                ; so the first save() will dump it, and thus it
+                ; will become the seed state for all procs.
+
+                fninit
+                ldmxcsr dword [mxcsr]
+                clts
+
+                mov ax, word [_boot_gs]         ; load per-CPU data
                 mov gs, ax
-		mov ax, word [_boot_tr]
-		ltr ax
-		jmp qword [_boot_entry]		; and enter kernel!
+                mov ax, word [_boot_tr]
+                ltr ax
+                jmp qword [_boot_entry]         ; and enter kernel!
+
+.align 4
+mxcsr:          .dword 0x1dc0   ; ignore all exceptions except division-by-zero
 
 .align 8
 .global _main
 .global _boot_entry
 .global _boot_tr
 .global _boot_gs
-_boot_entry:	.qword _main
-_boot_tr:	.word 0x38
-_boot_gs:	.word 0x48
+_boot_entry:    .qword _main
+_boot_tr:       .word 0x38
+_boot_gs:       .word 0x48
 
 ;
 ; error - report an error and halt.
@@ -358,14 +372,14 @@ _gdt:            .word 0, 0, 0, 0        ; null descriptor
                 .word tss0
                 .word 0x8900
                 .word 0
-		.word 0, 0, 0, 0	; 0x40 - (TSS is double-length)
+                .word 0, 0, 0, 0        ; 0x40 - (TSS is double-length)
 
-		.word 0x0FFC		; 0x48 - data overlap for CPU0 TSS
-		.word _tss0		; note that it's offset by 4 bytes,
-		.word 0x9200		; because a 64-bit TSS is misaligned:
-		.word 0			; this avoids awkwardness in C struct
+                .word 0x0FFC            ; 0x48 - data overlap for CPU0 TSS
+                .word _tss0             ; note that it's offset by 4 bytes,
+                .word 0x9200            ; because a 64-bit TSS is misaligned:
+                .word 0                 ; this avoids awkwardness in C struct
 
-_gdt_free:	.fill 384, 0		; 48 empty entries
+_gdt_free:      .fill 384, 0            ; 48 empty entries
 _gdt_end:
 
 gdt_ptr:        .word gdt_ptr-_gdt-1
@@ -540,15 +554,15 @@ spurious:       iretq
 
 .global _tss0
 .align 8
-tss0:		.dword 0
-_tss0:		.fill 4092, 0
+tss0:           .dword 0
+_tss0:          .fill 4092, 0
 
 ;
 ; prototype page tables. identity-map the first 2GB here manually, and leave
 ; it to the C startup code to do the rest before it touches anything else.
 ;
 
-.org 0x2FE0	; can't align to page boundaries with .align
+.org 0x2FE0     ; can't align to page boundaries with .align
 
 .global _proto_pml4
 _proto_pml4:    .qword proto_pdp + 0x03          ; R/W, P
@@ -557,3 +571,5 @@ proto_pdp:      .qword proto_pgdir + 0x03        ; R/W, P
                 .fill 4088, 0
 proto_pgdir:    .qword 0x183                     ; G, 2MB, R/W, P
                 .fill 4088, 0
+
+; vi: set ts=4 expandtab:

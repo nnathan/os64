@@ -59,8 +59,8 @@ struct tss
      * them around without keeping the offsets in lib.s in sync!
      */
 
-    struct tss *this;
-
+    struct tss *this;           /* pointer to self */
+    struct proc *curproc;       /* currently executing process */
 };
 
 #ifdef _KERNEL
