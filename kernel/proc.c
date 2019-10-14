@@ -53,7 +53,7 @@ struct proc *proc;
 
     for (i = 0; i < KSTACK_PAGES; ++i) {
         addr -= PAGE_SIZE;
-        pgno = page_alloc();
+        pgno = page_alloc(PMAP_ANON, addr);
         bzero(PGNO_TO_ADDR(pgno), PAGE_SIZE);
         pte = page_pte(proc, addr, PTE_P);
         *pte = PGNO_TO_ADDR(pgno) | PTE_P | PTE_W;

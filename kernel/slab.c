@@ -62,7 +62,7 @@ struct slab *slab;
         /* no free objects in the slab, allocate new page,
            construct the free object list, and add to slab */
 
-        pgno = page_alloc();
+        pgno = page_alloc(PMAP_SLAB, slab);
         page = (struct slab_page *) PGNO_TO_ADDR(pgno);
         page->parent = slab;
         page->nr_free = slab->per_page;

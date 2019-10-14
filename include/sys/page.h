@@ -28,16 +28,27 @@
 /* pmap[] has an entry for every physical page on the system.
    (the index is the frame number, i.e., the page's pgno_t). */
 
-#define PMAP_UNKNOWN    0
-#define PMAP_UNAVAIL    1
-#define PMAP_FREE       2
-#define PMAP_KERNEL     3
-#define PMAP_PMAP       4
+#define PMAP_UNKNOWN    0       /* unknown; only valid during page_init() */
+#define PMAP_UNAVAIL    1       /* address space not usable RAM */
+#define PMAP_FREE       2       /* on free list */
+#define PMAP_KERNEL     3       /* kernel load image */
+#define PMAP_PMAP       4       /* occupied by pmap[] array */
+#define PMAP_PTE        5       /* used by process page tables */
+#define PMAP_ANON       6       /* anonymous RAM assigned to process */
+#define PMAP_SLAB       7       /* belongs to a slab */
 
 struct pmap
 {
     unsigned char type;         /* PMAP_* */
-    unsigned long unused;       /* ... but will be */
+
+    union {
+        struct proc *proc;      /* PMAP_PTE: owner process */
+        unsigned long vaddr;    /* PMAP_ANON: virtual address in proc */
+        struct slab *slab;      /* PMAP_SLAB: associated slab */
+
+        long u;
+    } u;
+
     LIST_ENTRY(pmap) list;
 };
 

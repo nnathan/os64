@@ -50,8 +50,12 @@ pgno_t pgno;
     release(tokens);
 }
 
+/* allocate a page. associate the pmap entry with the 'type' and 'u' given.
+  guaranteed to succeed; will sleep to wait for free pages if needed. */
+
 pgno_t
-page_alloc()
+page_alloc(type, u)
+long u;
 {
     token_t tokens;
     struct pmap *pg;
@@ -65,6 +69,9 @@ page_alloc()
     LIST_REMOVE(pg, list);
     --nr_free_pages;
     release(tokens);
+
+    pg->type = type;
+    pg->u.u = u;
     return (pgno_t) (pg - pmap);
 }
 
@@ -95,7 +102,7 @@ char *vaddr;
 
         if (!(*pte & PTE_P)) {
             if (flags & PTE_P) {
-                pgno = page_alloc();
+                pgno = page_alloc(PMAP_PTE, proc);
                 table = (pte_t *) PGNO_TO_ADDR(pgno);
                 bzero(table, PAGE_SIZE);
                 *pte = PGNO_TO_ADDR(pgno) | PTE_P | PTE_W | PTE_U;
