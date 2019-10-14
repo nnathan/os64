@@ -122,9 +122,9 @@ apic_init()
     int max_rte;
     int i;
 
-    pte = page_pte(proc0.cr3, LAPIC_BASE, PTE_P | PTE_2MB);
+    pte = page_pte(&proc0, LAPIC_BASE, PTE_P | PTE_2MB);
     *pte = LAPIC_BASE | PTE_2MB | PTE_W | PTE_P;
-    pte = page_pte(proc0.cr3, IOAPIC_BASE, PTE_P | PTE_2MB);
+    pte = page_pte(&proc0, IOAPIC_BASE, PTE_P | PTE_2MB);
     *pte = IOAPIC_BASE | PTE_2MB | PTE_W | PTE_P;
 
     /* initialize the I/O APIC: configure all the RTEs

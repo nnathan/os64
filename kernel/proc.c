@@ -55,7 +55,7 @@ struct proc *proc;
         addr -= PAGE_SIZE;
         pgno = page_alloc();
         bzero(PGNO_TO_ADDR(pgno), PAGE_SIZE);
-        pte = page_pte(proc->cr3, addr, PTE_P);
+        pte = page_pte(proc, addr, PTE_P);
         *pte = PGNO_TO_ADDR(pgno) | PTE_P | PTE_W;
     }
 }

@@ -23,13 +23,14 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "../include/stddef.h"
+#include "../include/a.out.h"
 #include "../include/sys/param.h"
 #include "../include/sys/types.h"
 #include "../include/sys/queue.h"
 #include "../include/sys/page.h"
 #include "../include/sys/sched.h"
 #include "../include/sys/clock.h"
-#include "../include/a.out.h"
+#include "../include/sys/proc.h"
 
 /* free pages are tracked by keeping their pmap[] entries on free_pages. */
 
@@ -67,7 +68,7 @@ page_alloc()
     return (pgno_t) (pg - pmap);
 }
 
-/* return a pointer to the PTE for 'vaddr' in the virtual space 'pml4'.
+/* return a pointer to the PTE for 'vaddr' in the address space of 'proc'.
 
    we abuse the PTE_* constants for 'flags' here rather than defining
    new ones. the only valid flags are (possibly combined):
@@ -78,11 +79,11 @@ page_alloc()
    if PTE_P is not given and there is no existing mapping, NULL is returned. */
 
 pte_t *
-page_pte(pml4, vaddr, flags)
-pte_t *pml4;
+page_pte(proc, vaddr, flags)
+struct proc *proc;
 char *vaddr;
 {
-    pte_t *table = pml4;
+    pte_t *table = proc->cr3;
     int level = 3;
     pte_t *pte;
     pgno_t pgno;
@@ -195,7 +196,7 @@ page_init()
         if ((PGNO_TO_ADDR(pgno) % (2 * 1024 * 1024)) == 0) {
             pte_t *pte;
 
-            pte = page_pte(proto_pml4, PGNO_TO_ADDR(pgno), PTE_2MB | PTE_P);
+            pte = page_pte(&proc0, PGNO_TO_ADDR(pgno), PTE_2MB | PTE_P);
             *pte = PGNO_TO_ADDR(pgno) | PTE_2MB | PTE_G | PTE_W | PTE_P;
         }
 
