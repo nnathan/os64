@@ -157,9 +157,9 @@ kill_pics:      cli
                 out 0x20, al
                 out 0xa0, al
 
-                mov al, 0x20                    ; ICW2 = vectors 0x20-0x2F
+                mov al, 0xE0                    ; ICW2 = vectors 0xE0-0xEF
                 out 0x21, al
-                mov al, 0x28
+                mov al, 0xE8
                 out 0xA1, al
 
                 mov al, 4                       ; ICW3 = master/slave
@@ -421,26 +421,47 @@ idt:    ; processor-defined traps
         .word trap_30, 0x18, 0x8f00, 0, 0, 0, 0, 0  ; 0x1E = security
         .word trap_31, 0x18, 0x8f00, 0, 0, 0, 0, 0  ; 0x1F = RESERVED
 
+        .fill 3072, 0       ; 0x20 - 0xDF unused
+
         ; legacy 8259 PIC interrupts are vectored here
         ; we shouldn't hear from these guys, except for
         ; spurious interrupts.
 
-        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0x20
-        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0x21
-        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0x22
-        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0x23
-        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0x24
-        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0x25
-        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0x26
-        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0x27
-        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0x28
-        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0x29
-        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0x2A
-        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0x2B
-        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0x2C
-        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0x2D
-        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0x2E
-        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0x2F
+        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0xE0
+        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0xE1
+        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0xE2
+        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0xE3
+        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0xE4
+        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0xE5
+        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0xE6
+        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0xE7
+        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0xE8
+        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0xE9
+        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0xEA
+        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0xEB
+        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0xEC
+        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0xED
+        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0xEE
+        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0xEF
+
+        ; miscellaneous system vectors here
+
+        .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xF0
+        .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xF1
+        .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xF2
+        .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xF3
+        .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xF4
+        .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xF5
+        .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xF6
+        .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xF7
+        .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xF8
+        .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xF9
+        .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xFA
+        .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xFB
+        .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xFC
+        .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xFD
+        .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xFE
+        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0xFF - APIC spurious
 
 idt_ptr:        .word idt_ptr-idt-1
                 .dword idt
