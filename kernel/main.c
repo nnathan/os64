@@ -37,6 +37,7 @@
 static
 bsp()
 {
+    apic_init();
     acpi_init();
     panic("finished");
 }

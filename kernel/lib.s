@@ -88,8 +88,6 @@ _save:          pop rcx                 ; RIP
 _save_skipfp:   xor eax, eax
                 jmp rcx
 
-; resume(proc) struct proc *proc;
-
 .global _resume
 _resume:        mov rdx, qword [rsp, 8]             ; 'proc'
 
@@ -145,6 +143,27 @@ _inb:           xor eax, eax
 _outb:          mov dx, word [rsp, 8]   ; 'port'
                 mov al, byte [rsp, 16]  ; 'byte'
                 out al
+                ret
+
+; long lock() - disable interrupts
+; unlock(flags) long flags - restore previous interrupt state
+;
+; lock() disables interrupts and returns the previous RFLAGS so
+; a subsequent call to unlock() can re-enable them if needed.
+;
+; unlock() loads RFLAGS with 'flags' previously returned from lock(),
+; the effect being to re-enable interrupts if lock() disabled them.
+
+.global _lock
+_lock:          pushfq
+                pop rax
+                cli
+                ret
+
+.global _unlock
+_unlock:        mov rax, qword [rsp,8]
+                push rax
+                popfq
                 ret
 
 ; vi: set ts=4 expandtab:

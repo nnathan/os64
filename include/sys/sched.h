@@ -36,9 +36,16 @@ typedef unsigned long token_t;
 #define TOKEN_PMAP      TOKEN(0)        /* page allocation/deallocation */
 #define TOKEN_SLAB      TOKEN(1)        /* slab allocation/deallocation */
 
+/*
+ * IDT vector assignments: must match the IDT in locore.s, obviously.
+ */
+
+#define VECTOR_SPURIOUS     0xFF        /* APIC was just kidding */
+
 #ifdef _KERNEL
 
 token_t acquire();
+long lock();
 
 #endif /* _KERNEL */
 

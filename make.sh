@@ -60,11 +60,12 @@ $CC $CFLAGS -D_KERNEL -c kernel/acpi.c
 $CC $CFLAGS -D_KERNEL -c kernel/clock.c
 $CC $CFLAGS -D_KERNEL -c kernel/slab.c
 $CC $CFLAGS -D_KERNEL -c kernel/proc.c
+$CC $CFLAGS -D_KERNEL -c kernel/apic.c
 
 $LD -o kernel/kernel -e start -b 0x1000 \
 	kernel/locore.o kernel/lib.o kernel/main.o kernel/cons.o \
 	kernel/page.o kernel/sched.o kernel/seg.o kernel/acpi.o \
-	kernel/clock.o kernel/slab.o kernel/proc.o \
+	kernel/clock.o kernel/slab.o kernel/proc.o kernel/apic.o \
 	lib/libc/bzero.o
 
 $OBJ -s kernel/kernel >kernel/kernel.map

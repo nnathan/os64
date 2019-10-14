@@ -40,6 +40,13 @@
 #define USER_BASE   0xFFFFFF8000000000L     /* beginning of text */
 #define KSTACK_TOP  0x0000000000000000L     /* kernel stack at very top */
 
+/* for now, we assume the system has exactly one I/O APIC, and that the
+   APICs are memory-mapped in their standard locations. beware: the APIC
+   initialization code assumes these addresses are 2MB-page aligned. */
+
+#define LAPIC_BASE  0x00000000FEE00000L
+#define IOAPIC_BASE 0x00000000FEC00000L
+
 /* limit of physical address space: all RAM and memory-mapped I/O devices
    must live below this physical address. this limit determines the max
    size of pmap[], the required size of pgno_t, and the number of system
