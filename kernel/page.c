@@ -103,6 +103,7 @@ char *vaddr;
         if (!(*pte & PTE_P)) {
             if (flags & PTE_P) {
                 pgno = page_alloc(PMAP_PTE, proc);
+                LIST_INSERT_HEAD(&proc->pte_pages, &pmap[pgno], list);
                 table = (pte_t *) PGNO_TO_ADDR(pgno);
                 bzero(table, PAGE_SIZE);
                 *pte = PGNO_TO_ADDR(pgno) | PTE_P | PTE_W | PTE_U;

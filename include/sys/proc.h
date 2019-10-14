@@ -41,6 +41,10 @@ struct proc
     unsigned long rip;
 
     char fxsave[512];       /* ..must be 16-byte aligned.. */
+
+    /* the remaining fields are only accessed from C, so reordering is OK */
+
+    LIST_HEAD(,pmap) pte_pages;         /* pages allocated for page tables */
 };
 
 #ifdef _KERNEL

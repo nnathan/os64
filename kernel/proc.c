@@ -22,6 +22,7 @@
  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+#include "../include/stddef.h"
 #include "../include/sys/param.h"
 #include "../include/sys/queue.h"
 #include "../include/sys/types.h"
@@ -33,6 +34,8 @@
 proc_init(proc)
 struct proc *proc;
 {
+    LIST_INIT(&proc->pte_pages);
+
     /* usually, these fields will be overwritten with data from the parent
        (via a standard fork), but provide values here that apply to early
        procs that are hand-crafted by the kernel (proc0, the idle tasks) */
