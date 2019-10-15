@@ -218,11 +218,12 @@ restart32:      mov ax, 0x10                    ; 32-bit data selectors
                 mov cr0, eax
                 jmpf restart64, 0x18
 .bits 64
-restart64:      mov ax, 0x20                    ; kernel data (sort of)
+restart64:      xor eax, eax                    ; data segments are null
                 mov ds, ax
                 mov ss, ax
                 mov es, ax
                 mov fs, ax
+                mov gs, ax
 
                 ; initialize sane FPU state and mark it 'dirty'
                 ; so the first save() will dump it, and thus it
@@ -232,10 +233,18 @@ restart64:      mov ax, 0x20                    ; kernel data (sort of)
                 ldmxcsr dword [mxcsr]
                 clts
 
-                mov ax, word [_boot_gs]         ; load per-CPU data
-                mov gs, ax
+                ; load per-CPU registers: TSS and GS base registers
+
                 mov ax, word [_boot_tr]
                 ltr ax
+
+                mov eax, dword [_boot_tss]
+                mov edx, dword [_boot_tss+4]
+                mov ecx, IA32_GS_BASE
+                wrmsr
+                mov ecx, IA32_KERNEL_GS_BASE
+                wrmsr
+
                 jmp qword [_boot_entry]         ; and enter kernel!
 
 .align 4
@@ -245,10 +254,10 @@ mxcsr:          .dword 0x1dc0   ; ignore all exceptions except division-by-zero
 .global _main
 .global _boot_entry
 .global _boot_tr
-.global _boot_gs
+.global _boot_tss
 _boot_entry:    .qword _main
 _boot_tr:       .word 0x38
-_boot_gs:       .word 0x48
+_boot_tss:      .qword _tss0
 
 ;
 ; error - report an error and halt.
@@ -336,7 +345,7 @@ test_a20_done:  pop es
 .global _gdt
 .global _gdt_free
 .global _gdt_end
-_gdt:            .word 0, 0, 0, 0        ; null descriptor
+_gdt:           .word 0, 0, 0, 0        ; null descriptor
 
                 .word 0xFFFF            ; 0x08 = 32-bit code
                 .word 0
@@ -373,11 +382,6 @@ _gdt:            .word 0, 0, 0, 0        ; null descriptor
                 .word 0x8900
                 .word 0
                 .word 0, 0, 0, 0        ; 0x40 - (TSS is double-length)
-
-                .word 0x0FFC            ; 0x48 - data overlap for CPU0 TSS
-                .word _tss0             ; note that it's offset by 4 bytes,
-                .word 0x9200            ; because a 64-bit TSS is misaligned:
-                .word 0                 ; this avoids awkwardness in C struct
 
 _gdt_free:      .fill 384, 0            ; 48 empty entries
 _gdt_end:

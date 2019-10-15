@@ -82,7 +82,7 @@ extern unsigned long gdt[], gdt_free[], gdt_end[];
    the kernel. the BSP's values are predetermined (see locore.s). */
 
 extern unsigned short boot_tr;      /* per-CPU task state segment selector */
-extern unsigned short boot_gs;      /* per-CPU GS (overlays TSS) */
+extern unsigned long boot_tss;      /* per-CPU GS (overlays TSS) */
 extern int (*boot_entry)();
 
 #endif /* _KERNEL */
