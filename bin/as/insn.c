@@ -78,6 +78,14 @@ struct insn insns[] =
     { "mov", 2, { O_REG_32 | O_I_MODRM, O_SREG2 | O_SREG3 | O_I_MIDREG }, 2, { 0x8C }, I_DATA_32 },
     { "mov", 2, { O_REG_64 | O_I_MODRM, O_SREG2 | O_SREG3 | O_I_MIDREG }, 2, { 0x8C }, I_DATA_64 | I_NO_DATA_REX },
 
+    { "bsf", 2, { O_REG_16 | O_I_MIDREG, O_MRM_16 | O_I_MODRM }, 3, { 0x0F, 0xBC, 0x00 }, I_DATA_16 },
+    { "bsf", 2, { O_REG_32 | O_I_MIDREG, O_MRM_32 | O_I_MODRM }, 3, { 0x0F, 0xBC, 0x00 }, I_DATA_32 },
+    { "bsf", 2, { O_REG_64 | O_I_MIDREG, O_MRM_64 | O_I_MODRM }, 3, { 0x0F, 0xBC, 0x00 }, I_DATA_64 },
+
+    { "bsr", 2, { O_REG_16 | O_I_MIDREG, O_MRM_16 | O_I_MODRM }, 3, { 0x0F, 0xBD, 0x00 }, I_DATA_16 },
+    { "bsr", 2, { O_REG_32 | O_I_MIDREG, O_MRM_32 | O_I_MODRM }, 3, { 0x0F, 0xBD, 0x00 }, I_DATA_32 },
+    { "bsr", 2, { O_REG_64 | O_I_MIDREG, O_MRM_64 | O_I_MODRM }, 3, { 0x0F, 0xBD, 0x00 }, I_DATA_64 },
+
     { "push", 1, { O_REG_16 | O_I_ENDREG }, 1, { 0x50 }, I_DATA_16 },
     { "push", 1, { O_REG_32 | O_I_ENDREG }, 1, { 0x50 }, I_DATA_32 | I_NO_BITS_64 },
     { "push", 1, { O_REG_64 | O_I_ENDREG }, 1, { 0x50 }, I_DATA_64 | I_NO_DATA_REX },
@@ -806,3 +814,5 @@ struct insn insns[] =
 
     { NULL }
 };
+
+/* vi: set ts=4 expandtab: */
