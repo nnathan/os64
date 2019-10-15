@@ -141,4 +141,13 @@ _unlock:        mov rax, qword [rsp,8]
                 popfq
                 ret
 
+; int bsf(v) long v; return the least significant bit set, or -1 if none
+
+.global _bsf
+_bsf:           bsf rax, qword [rsp,8]  ; 'v'
+                jz _bsf_none
+                ret
+_bsf_none:      mov eax, -1
+                ret
+
 ; vi: set ts=4 expandtab:
