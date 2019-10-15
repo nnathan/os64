@@ -56,7 +56,7 @@ struct tss
      * end of architecturally-defined section.
      *
      * the rest of these are os/64 per-cpu variables; do not move
-     * them around without keeping the offsets in lib.s in sync!
+     * them around without keeping the offsets in defs.s in sync!
      */
 
     struct tss *this;           /* pointer to self */

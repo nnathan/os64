@@ -48,8 +48,8 @@ $AS -o lib/libc/bzero.o -l lib/libc/bzero.lst lib/libc/bzero.s
 
 echo ........................................ building kernel
 
-$AS -o kernel/locore.o -l kernel/locore.lst kernel/locore.s
-$AS -o kernel/lib.o -l kernel/lib.lst kernel/lib.s
+$AS -o kernel/locore.o -l kernel/locore.lst kernel/defs.s kernel/locore.s
+$AS -o kernel/lib.o -l kernel/lib.lst kernel/defs.s kernel/lib.s
 
 $CC $CFLAGS -D_KERNEL -c kernel/main.c
 $CC $CFLAGS -D_KERNEL -c kernel/cons.c

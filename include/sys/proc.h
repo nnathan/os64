@@ -28,7 +28,7 @@
 struct proc
 {
     /* process context. these are accessed by save() and resume(), so
-       do not move them around without ensuring lib.s is in sync. */
+       do not move them around without ensuring defs.s is in sync. */
 
     pte_t *cr3;
     unsigned long rsp;
