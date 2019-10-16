@@ -31,6 +31,7 @@ IA32_KERNEL_GS_BASE=0xC0000102
 
 TSS_RSP0=0
 TSS_THIS=104
+TSS_CURPROC=112
 
 ; offsets in 'struct proc'
 

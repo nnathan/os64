@@ -79,19 +79,22 @@ _resume:        mov rdx, qword [rsp, 8]             ; 'proc'
                 mov r14, qword [rdx, PROC_R14]
                 mov r15, qword [rdx, PROC_R15]
 
-                cli ; changing stacks
+                cli ; atomic context switch
 
                 mov rsp, qword [rdx, PROC_RSP]
                 mov rax, qword [rdx, PROC_CR3]
                 mov cr3, rax
 
-                mov rax, qword [rdx, PROC_RFLAGS]
-                push rax
-                popfq
+                seg gs
+                mov qword [TSS_CURPROC], rdx
 
                 mov rax, cr0        ; set CR0.TS since
                 or rax, 0x08        ; the FPU state is
                 mov cr0, rax        ; now unknown.
+
+                mov rax, qword [rdx, PROC_RFLAGS]
+                push rax
+                popfq ; interrupts re-enabled here (usually)
 
                 mov rdx, qword [rdx, PROC_RIP]
                 mov eax, 1
