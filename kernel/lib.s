@@ -153,4 +153,24 @@ _bsf:           bsf rax, qword [rsp,8]  ; 'v'
 _bsf_none:      mov eax, -1
                 ret
 
+; spin() - disable interrupts and acquire the scheduler spinlock
+; unspin() - release the scheduler spinlock and enable interrupts
+
+.global spin_lock ; in locore.s
+.global _spin
+_spin:          cli
+_spin_1:        lock
+                bts dword [spin_lock], 0
+                jc _spin_2
+                ret
+_spin_2:        pause
+                test dword [spin_lock], 1
+                jnz _spin_2
+                jmp _spin_1
+
+.global _unspin
+_unspin:        mov dword [spin_lock], 0
+                sti
+                ret
+
 ; vi: set ts=4 expandtab:

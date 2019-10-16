@@ -111,9 +111,13 @@ bsp()
 {
     slab_init(&proc_slab, sizeof(struct proc));
 
-    apic_init();
-    acpi_init();
+    /* once the APICs are configured, it's safe to re-enable interrupts. we do
+       this with unspin() to simultaneously initialize the scheduler lock. */
 
+    apic_init();
+    unspin();
+
+    acpi_init();
     start_aps();
 
     panic("done");

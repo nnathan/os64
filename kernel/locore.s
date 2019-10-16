@@ -17,6 +17,9 @@ _bootcmd=0x540          ; BOOTCMD_SZ bytes - must agree with boot!
 .global _proc0          ; must be 16-byte aligned
 _proc0=0x800
 
+.global spin_lock       ; scheduler lock for spin/unspin
+spin_lock=0xFC0         ; goes on its own cache line (hopefully)
+
 .global _pmap
 _pmap=0x100000          ; pmap[] starts at 1MB mark
 
