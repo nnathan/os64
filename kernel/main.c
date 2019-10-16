@@ -32,19 +32,91 @@
 #include "../include/sys/proc.h"
 #include "../include/sys/param.h"
 
+/* the APs enter here in their idle process contexts */
+
+static
+ap()
+{
+    struct tss *tss;
+
+    printf("AP %d started\n", lapic_id());
+
+    lapic_init();
+    boot_flag = 1;
+    idle();
+}
+
+/* allocate a TSS and idle process for, and start, each AP in turn */
+
+static
+start_aps()
+{
+    int n;
+    struct madt_cpu *cpu;
+    struct tss *tss;
+    struct proc *proc;
+    pgno_t pgno;
+    unsigned long desc;
+
+    for (n = 0; cpu = acpi_cpu(n); ++n) {
+        if (cpu->id == lapic_id()) continue;
+        if (!(cpu->flags & MADT_CPU_ENABLED)) continue;
+
+        /* allocate a page for the AP TSS */
+
+        pgno = page_alloc(PMAP_KERNEL, 0);
+        boot_tss = PGNO_TO_ADDR(pgno);
+
+        /* create GDT selector for AP's TR */
+
+        desc = (boot_tss & 0x00FFFFFF)  << 16;
+        desc |= (boot_tss & 0xFF000000) << 32;
+        desc |= 0x0000890000000FFF;
+        boot_tr = gdt_alloc(desc);
+        gdt_alloc(boot_tss >> 32);
+
+        /* initialize the TSS; remember we offset the struct */
+
+        boot_tss += 4;
+        tss = (struct tss *) boot_tss;
+        tss_init(tss);
+
+        /* now, allocate the AP's idle process with an entry point at
+           ap(), and set the AP to resume that process on boot-up. */
+
+        proc = proc_alloc();
+        proc->rip = (long) ap;
+        boot_entry = resume;
+        boot_proc = proc;
+
+        /* we start the APs synchronously because
+           they share the trampoline stack. */
+
+        boot_flag = 0;
+        lapic_startcpu(cpu->id, &exec);
+
+        while (boot_flag == 0) {
+            /* call a harmless function so the compiler doesn't hold the flag
+               in a register; change to 'volatile' when compiler supports it */
+
+            lapic_id();
+        }
+    }
+}
+
 /* the BSP re-starts here properly situated on a kernel stack as proc0 */
 
 static
 bsp()
 {
-    struct proc *proc;
-
     slab_init(&proc_slab, sizeof(struct proc));
 
     apic_init();
     acpi_init();
 
-    panic("finished");
+    start_aps();
+
+    panic("done");
 }
 
 /* the BSP enters the kernel at main(), on the trampoline stack,

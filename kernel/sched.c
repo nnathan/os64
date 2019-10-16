@@ -50,6 +50,11 @@ char *channel;
 {
 }
 
+idle()
+{
+    for (;;) ;
+}
+
 /* panic prints a message and halts the system. this is considered part of
    the scheduler because it needs to halt all system activity on all CPUs. */
 

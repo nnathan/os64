@@ -83,7 +83,9 @@ extern unsigned long gdt[], gdt_free[], gdt_end[];
 
 extern unsigned short boot_tr;      /* per-CPU task state segment selector */
 extern unsigned long boot_tss;      /* per-CPU GS (overlays TSS) */
-extern int (*boot_entry)();
+extern int (*boot_entry)();         /* kernel entry function */
+extern struct proc *boot_proc;      /* argument for kernel entry function */
+extern char boot_flag;              /* boot synchronization flag */
 
 #endif /* _KERNEL */
 

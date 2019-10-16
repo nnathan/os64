@@ -57,6 +57,13 @@
 #define LAPIC_ICR_IPI_INIT      0x00004500  /* init IPI to target CPU */
 #define LAPIC_ICR_IPI_STARTUP   0x00004600  /* startup IPI to target CPU */
 
+/* what's my APIC id? */
+
+lapic_id()
+{
+    return LAPIC_READ(LAPIC_ID) >> 24;
+}
+
 /* called by each CPU during startup. this is probably overly pedantic, as
    the firmware should leave the local APICs in a well-defined state. also,
    some of these LVTs may not exist on all APICs, and there may be others.

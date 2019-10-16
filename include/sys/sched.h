@@ -45,8 +45,9 @@ typedef unsigned long token_t;
 
 #ifdef _KERNEL
 
-token_t acquire();
-long lock();
+extern token_t acquire();
+extern long lock();
+extern resume();
 
 #endif /* _KERNEL */
 

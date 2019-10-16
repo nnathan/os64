@@ -245,19 +245,26 @@ restart64:      xor eax, eax                    ; data segments are null
                 mov ecx, IA32_KERNEL_GS_BASE
                 wrmsr
 
-                jmp qword [_boot_entry]         ; and enter kernel!
+                push qword [_boot_proc]
+                call qword [_boot_entry]        ; and enter kernel!
+                cli                             ; should never return ..
+whoops:         jmp whoops
 
 .align 4
 mxcsr:          .dword 0x1dc0   ; ignore all exceptions except division-by-zero
 
-.align 8
 .global _main
 .global _boot_entry
-.global _boot_tr
+.global _boot_proc
 .global _boot_tss
+.global _boot_tr
+.global _boot_flag
+.align 8
 _boot_entry:    .qword _main
-_boot_tr:       .word 0x38
+_boot_proc:     .qword 0
 _boot_tss:      .qword _tss0
+_boot_tr:       .word 0x38
+_boot_flag:     .byte 0
 
 ;
 ; error - report an error and halt.
