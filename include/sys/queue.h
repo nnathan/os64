@@ -201,6 +201,8 @@ struct {                                                                    \
     struct type *stqe_next; /* next element */                              \
 }
 
+#define STAILQ_HEAD_INITIALIZER(head) { NULL, &(head).stqh_first }
+
 /*
  * Singly-linked Tail queue functions.
  */
@@ -280,6 +282,8 @@ struct {                                                                    \
     struct type *sqe_next;  /* next element */                              \
 }
 
+#define SIMPLEQ_HEAD_INITIALIZER(head) { NULL, &(head).sqh_first }
+
 /*
  * Simple queue functions.
  */
@@ -353,6 +357,8 @@ struct {                                                                    \
     qual type *qual *tqe_prev;  /* address of previous next element */      \
 }
 #define TAILQ_ENTRY(type)   _TAILQ_ENTRY(struct type,)
+
+#define TAILQ_HEAD_INITIALIZER(head) { NULL, &(head).tqh_first }
 
 /*
  * Tail queue functions.
