@@ -75,6 +75,22 @@ long u;
     return (pgno_t) (pg - pmap);
 }
 
+/* allocate and initialize a new PTE page for the given process */
+
+pte_t *
+pte_alloc(proc)
+struct proc *proc;
+{
+    pte_t *pte;
+    pgno_t pgno;
+
+    pgno = page_alloc(PMAP_PTE, proc);
+    LIST_INSERT_HEAD(&proc->pte_pages, &pmap[pgno], list);
+    pte = (pte_t *) PGNO_TO_ADDR(pgno);
+    bzero(pte, PAGE_SIZE);
+    return pte;
+}
+
 /* return a pointer to the PTE for 'vaddr' in the address space of 'proc'.
 
    we abuse the PTE_* constants for 'flags' here rather than defining
@@ -102,11 +118,8 @@ char *vaddr;
 
         if (!(*pte & PTE_P)) {
             if (flags & PTE_P) {
-                pgno = page_alloc(PMAP_PTE, proc);
-                LIST_INSERT_HEAD(&proc->pte_pages, &pmap[pgno], list);
-                table = (pte_t *) PGNO_TO_ADDR(pgno);
-                bzero(table, PAGE_SIZE);
-                *pte = PGNO_TO_ADDR(pgno) | PTE_P | PTE_W | PTE_U;
+                table = pte_alloc(proc);
+                *pte = ((long) table)  | PTE_P | PTE_W | PTE_U;
             } else
                 return NULL;
         } else
