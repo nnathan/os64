@@ -31,15 +31,18 @@ struct tss *tss;
     tss->iomap = 0xFFFF;    /* no I/O ops outside ring 0 */
 }
 
-/* allocate an entry in the GDT and return its selector (DPL=0). */
+/* allocate an entry in the GDT, fill it in with the supplied 64-bit
+   value, and return its selector (DPL=0). */
 
-gdt_alloc()
+gdt_alloc(v)
+unsigned long v;
 {
     static unsigned long *gdt_next = gdt_free;
 
     int sel;
 
     if (gdt_next < gdt_end) {
+        *gdt_next = v;
         sel = (gdt_next - gdt) * 8;
         ++gdt_next;
     } else
