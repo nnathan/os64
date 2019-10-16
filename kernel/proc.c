@@ -112,7 +112,14 @@ proc_alloc()
     proc_init(last_pid, new);
     release(TOKEN_PROC);
 
+    /* allocate and initialize the top-level page tables, then stack.
+       if/when we support more than 512GB of physical address space
+       (PHYSMAX), we'll need to copy more than the first proto PML4E */
+
+    new->cr3 = pte_alloc(new);
+    new->cr3[0] = proto_pml4[0];    /* shared kernel mappings */
     proc_kstack(new);
+
     return new;
 }
 
