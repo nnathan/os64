@@ -44,12 +44,18 @@ struct proc
 
     /* the remaining fields are only accessed from C, so reordering is OK */
 
+    pid_t pid;
+
     LIST_HEAD(,pmap) pte_pages;         /* pages allocated for page tables */
+    TAILQ_ENTRY(proc) all_links;        /* all_procs */
 };
 
 #ifdef _KERNEL
 
 extern struct proc proc0;
+extern struct slab proc_slab;
+
+struct proc *proc_alloc();
 
 #endif /* _KERNEL */
 

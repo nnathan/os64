@@ -37,8 +37,13 @@
 static
 bsp()
 {
+    struct proc *proc;
+
+    slab_init(&proc_slab, sizeof(struct proc));
+
     apic_init();
     acpi_init();
+
     panic("finished");
 }
 
@@ -60,7 +65,7 @@ main()
        calling page_init() as it will use some scheduling primitives.
        once memory is mapped, we can allocate a proper kernel stack */
 
-    proc_init(&proc0);
+    proc_init(0, &proc0);
     proc0.cr3 = proto_pml4;
     proc0.rip = (long) bsp;
     this()->curproc = &proc0;

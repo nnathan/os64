@@ -35,6 +35,7 @@ typedef unsigned long token_t;
 
 #define TOKEN_PMAP      TOKEN(0)        /* page allocation/deallocation */
 #define TOKEN_SLAB      TOKEN(1)        /* slab allocation/deallocation */
+#define TOKEN_PROC      TOKEN(2)        /* global process information */
 
 /*
  * IDT vector assignments: must match the IDT in locore.s, obviously.

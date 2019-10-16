@@ -27,21 +27,38 @@
 #include "../include/sys/queue.h"
 #include "../include/sys/types.h"
 #include "../include/sys/page.h"
+#include "../include/sys/slab.h"
 #include "../include/sys/proc.h"
+#include "../include/sys/sched.h"
 
-/* initialize a new struct proc to a sane state */
+struct slab proc_slab;
 
-proc_init(proc)
+/* these globals are protected by TOKEN_PROC */
+
+pid_t last_pid;                 /* last assigned PID */
+int nr_procs;                   /* number of processes */
+TAILQ_HEAD(,proc) all_procs;    /* all processes */
+
+/* initialize a new struct proc to a sane state and add it to the all_procs
+   list. this is meant to be called only from two places: early main() and
+   proc_alloc(). in the latter case, TOKEN_PROC is held when this is called.
+   in the former, there is no need because we're not scheduling yet. */
+
+proc_init(pid, proc)
+pid_t pid;
 struct proc *proc;
 {
+    proc->pid = pid;
     LIST_INIT(&proc->pte_pages);
+    TAILQ_INSERT_HEAD(&all_procs, proc, all_links);
+    ++nr_procs;
 
     /* usually, these fields will be overwritten with data from the parent
        (via a standard fork), but provide values here that apply to early
        procs that are hand-crafted by the kernel (proc0, the idle tasks) */
 
     proc->rsp = KSTACK_TOP;
-    proc->rflags = 0; /* most importantly,, IF=0 */
+    proc->rflags = 0; /* most importantly, IF=0 */
 }
 
 /* allocate and map in the kernel stack for a process */
@@ -61,6 +78,42 @@ struct proc *proc;
         pte = page_pte(proc, addr, PTE_P);
         *pte = PGNO_TO_ADDR(pgno) | PTE_P | PTE_W;
     }
+}
+
+/* allocate a new proc struct. assign a process ID,
+   initialize with sane defaults, attach kernel stack. */
+
+struct proc *
+proc_alloc()
+{
+    struct proc *new;
+    struct proc *proc;
+
+    new = (struct proc *) slab_alloc(&proc_slab);
+
+    acquire(TOKEN_PROC);
+
+    /* assign an unused pid. this will loop forever if there are no free
+       pids - we never release TOKEN_PROC so none will become free. it is
+       up to other parts of the system to ensure we don't try to make a
+       ridiculous number of processes. */
+
+    do {
+        ++last_pid;
+        if (last_pid < 0) last_pid = 0;
+
+        proc = TAILQ_FIRST(&all_procs);
+        while (proc != NULL) {
+            if (proc->pid == last_pid) break;
+            proc = TAILQ_NEXT(proc, all_links);
+        }
+    } while (proc != NULL);
+
+    proc_init(last_pid, new);
+    release(TOKEN_PROC);
+
+    proc_kstack(new);
+    return new;
 }
 
 /* vi: set ts=4 expandtab: */
