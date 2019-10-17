@@ -90,6 +90,7 @@ extern pte_t proto_pml4[];
 extern pgno_t page_alloc();
 extern pte_t *pte_alloc();
 extern pte_t *page_pte();
+extern char *page_phys();
 
 #endif /* _KERNEL */
 

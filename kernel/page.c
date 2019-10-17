@@ -130,6 +130,22 @@ char *vaddr;
     return pte;
 }
 
+/* return a pointer to the physical page associated with the virtual
+   address in 'proc', or NULL if it is not mapped/present. */
+
+char *
+page_phys(proc, vaddr)
+struct proc *proc;
+char *vaddr;
+{
+    pte_t *pte;
+
+    pte = page_pte(proc, vaddr, 0);
+    if ((pte == NULL) || !(*pte & PTE_P)) return NULL;
+
+    return (char *) PTE_ADDR(*pte);
+}
+
 /* locore.s queries the BIOS and exports e820_map[] and nr_e820 */
 
 union e820
