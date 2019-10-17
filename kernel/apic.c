@@ -26,8 +26,8 @@
 #include "../include/sys/param.h"
 #include "../include/sys/types.h"
 #include "../include/sys/page.h"
-#include "../include/sys/proc.h"
 #include "../include/sys/sched.h"
+#include "../include/sys/proc.h"
 
 /* local APIC definitions. for now, we use it in xAPIC (memory-mapped) mode;
    until the compiler supports inline asm this is faster than MSR access. */

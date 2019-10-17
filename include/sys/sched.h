@@ -37,11 +37,27 @@ typedef unsigned long token_t;
 #define TOKEN_SLAB      TOKEN(1)        /* slab allocation/deallocation */
 #define TOKEN_PROC      TOKEN(2)        /* global process information */
 
+#define TOKEN_ALL       (-1L)
+
 /*
  * IDT vector assignments: must match the IDT in locore.s, obviously.
  */
 
 #define VECTOR_SPURIOUS     0xFF        /* APIC was just kidding */
+
+/* Process priorities: lower number means higher priority. */
+
+#define PRIORITY_TTY        0           /* serial device ISRs */
+#define PRIORITY_NET        1           /* network device ISRs */
+#define PRIORITY_BLOCK      2           /* block device ISRs */
+#define PRIORITY_USER       3           /* user processes */
+#define PRIORITY_IDLE       4           /* idle processes: always lowest */
+
+#define NR_RUNQS           (PRIORITY_IDLE + 1)
+
+/* Number of sleep queues. This is the number of hash buckets for 'channel'. */
+
+#define NR_SLEEPQS          64          /* max is 64 */
 
 #ifdef _KERNEL
 

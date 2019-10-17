@@ -28,8 +28,8 @@
 #include "../include/sys/types.h"
 #include "../include/sys/page.h"
 #include "../include/sys/slab.h"
-#include "../include/sys/proc.h"
 #include "../include/sys/sched.h"
+#include "../include/sys/proc.h"
 
 struct slab proc_slab;
 
@@ -37,7 +37,8 @@ struct slab proc_slab;
 
 pid_t last_pid;                 /* last assigned PID */
 int nr_procs;                   /* number of processes */
-TAILQ_HEAD(,proc) all_procs;    /* all processes */
+
+TAILQ_HEAD(,proc) all_procs = TAILQ_HEAD_INITIALIZER(all_procs);
 
 /* initialize a new struct proc to a sane state and add it to the all_procs
    list. this is meant to be called only from two places: early main() and
@@ -49,6 +50,9 @@ pid_t pid;
 struct proc *proc;
 {
     proc->pid = pid;
+    proc->flags = 0;
+    proc->priority = PRIORITY_IDLE;
+    proc->tokens = 0;
     LIST_INIT(&proc->pte_pages);
     TAILQ_INSERT_HEAD(&all_procs, proc, all_links);
     ++nr_procs;
@@ -88,10 +92,11 @@ proc_alloc()
 {
     struct proc *new;
     struct proc *proc;
+    token_t tokens;
 
     new = (struct proc *) slab_alloc(&proc_slab);
 
-    acquire(TOKEN_PROC);
+    tokens = acquire(TOKEN_PROC);
 
     /* assign an unused pid. this will loop forever if there are no free
        pids - we never release TOKEN_PROC so none will become free. it is
@@ -110,7 +115,7 @@ proc_alloc()
     } while (proc != NULL);
 
     proc_init(last_pid, new);
-    release(TOKEN_PROC);
+    release(tokens);
 
     /* allocate and initialize the top-level page tables, then stack.
        if/when we support more than 512GB of physical address space

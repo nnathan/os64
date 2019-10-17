@@ -46,7 +46,6 @@ pgno_t pgno;
     pmap[pgno].type = PMAP_FREE;
     LIST_INSERT_HEAD(&free_pages, &pmap[pgno], list);
     ++nr_free_pages;
-    wakeup(&nr_free_pages);
     release(tokens);
 }
 

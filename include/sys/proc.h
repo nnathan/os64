@@ -45,9 +45,13 @@ struct proc
     /* the remaining fields are only accessed from C, so reordering is OK */
 
     pid_t pid;
-
+    int flags;                          /* PROC_* (currently unused) */
+    int priority;                       /* scheduling priority: PRIORITY_* */
+    char *channel;                      /* event sleeping on */
+    token_t tokens;                     /* all held (or required) tokens */
     LIST_HEAD(,pmap) pte_pages;         /* pages allocated for page tables */
     TAILQ_ENTRY(proc) all_links;        /* all_procs */
+    TAILQ_ENTRY(proc) q_links;          /* runq[] or sleepq[] */
 };
 
 #ifdef _KERNEL

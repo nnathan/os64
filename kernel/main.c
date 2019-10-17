@@ -31,6 +31,7 @@
 #include "../include/sys/acpi.h"
 #include "../include/sys/proc.h"
 #include "../include/sys/param.h"
+#include "../include/sys/clock.h"
 
 /* the APs enter here in their idle process contexts */
 
@@ -109,13 +110,14 @@ start_aps()
 static
 bsp()
 {
+    struct proc *proc;
+    int i;
+
     slab_init(&proc_slab, sizeof(struct proc));
 
-    /* once the APICs are configured, it's safe to re-enable interrupts. we do
-       this with unspin() to simultaneously initialize the scheduler lock. */
-
-    apic_init();
-    unspin();
+    apic_init();        /* disables all interrupt sources */
+    sched_init();       /* initialize scheduler qs/lock, enable interrupts */
+    release(TOKEN_ALL); /* the scheduler is safe now */
 
     acpi_init();
     start_aps();
@@ -137,13 +139,15 @@ main()
     printf("[%d text, %d data, %d bss] @ 0x%x\n", exec.a_text, exec.a_data,
             exec.a_bss, &exec);
 
-    /* manually craft proc0. it must be minimally configured before
-       calling page_init() as it will use some scheduling primitives.
+    /* manually craft proc0. it must be minimally configured before calling
+       page_init() as it will use acquire/release primitives. (we start with
+       process0 holding ALL TOKENS so they don't try to schedule, though.)
        once memory is mapped, we can allocate a proper kernel stack */
 
     proc_init(0, &proc0);
     proc0.cr3 = proto_pml4;
     proc0.rip = (long) bsp;
+    proc0.tokens = TOKEN_ALL;
     this()->curproc = &proc0;
     page_init();
     proc_kstack(&proc0);
