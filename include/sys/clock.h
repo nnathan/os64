@@ -28,6 +28,7 @@
 #ifdef _KERNEL
 
 extern time_t time;
+extern time_t epoch();
 
 #endif /* _KERNEL */
 
