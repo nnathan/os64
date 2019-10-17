@@ -27,20 +27,23 @@
 
 struct proc
 {
-    /* process context. these are accessed by save() and resume(), so
+    /* CPU context. these are accessed by save() and resume(), so
        do not move them around without ensuring defs.s is in sync. */
 
     pte_t *cr3;
-    unsigned long rsp;
 
-    unsigned long rbx, rbp, rsi, rdi;
-    unsigned long r8, r9, r10, r11;
-    unsigned long r12, r13, r14, r15;
+    struct {
+        unsigned long rsp;
 
-    unsigned long rflags;
-    unsigned long rip;
+        unsigned long rbx, rbp, rsi, rdi;
+        unsigned long r8, r9, r10, r11;
+        unsigned long r12, r13, r14, r15;
 
-    char fxsave[512];       /* ..must be 16-byte aligned.. */
+        unsigned long rflags;
+        unsigned long rip;
+
+        char fxsave[512];       /* ..must be 16-byte aligned.. */
+    } cpu;
 
     /* the remaining fields are only accessed from C, so reordering is OK */
 

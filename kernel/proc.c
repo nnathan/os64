@@ -61,8 +61,8 @@ struct proc *proc;
        (via a standard fork), but provide values here that apply to early
        procs that are hand-crafted by the kernel (proc0, the idle tasks) */
 
-    proc->rsp = KSTACK_TOP;
-    proc->rflags = 0; /* most importantly, IF=0 */
+    proc->cpu.rsp = KSTACK_TOP;
+    proc->cpu.rflags = 0; /* most importantly, IF=0 */
 }
 
 /* allocate and map in the kernel stack for a process */

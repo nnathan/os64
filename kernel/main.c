@@ -86,7 +86,7 @@ start_aps()
            ap(), and set the AP to resume that process on boot-up. */
 
         proc = proc_alloc();
-        proc->rip = (long) ap;
+        proc->cpu.rip = (long) ap;
         boot_entry = resume;
         boot_proc = proc;
 
@@ -146,7 +146,7 @@ main()
 
     proc_init(0, &proc0);
     proc0.cr3 = proto_pml4;
-    proc0.rip = (long) bsp;
+    proc0.cpu.rip = (long) bsp;
     proc0.tokens = TOKEN_ALL;
     this()->curproc = &proc0;
     page_init();
