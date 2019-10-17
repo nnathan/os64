@@ -43,6 +43,7 @@ OBJ=$TMP/obj
 echo ........................................ building libc
 
 $AS -o lib/libc/bzero.o -l lib/libc/bzero.lst lib/libc/bzero.s
+$AS -o lib/libc/bcopy.o -l lib/libc/bcopy.lst lib/libc/bcopy.s
 
 ############################################################
 
@@ -66,7 +67,7 @@ $LD -o kernel/kernel -e start -b 0x1000 \
 	kernel/locore.o kernel/lib.o kernel/main.o kernel/cons.o \
 	kernel/page.o kernel/sched.o kernel/seg.o kernel/acpi.o \
 	kernel/clock.o kernel/slab.o kernel/proc.o kernel/apic.o \
-	lib/libc/bzero.o
+	lib/libc/bzero.o lib/libc/bcopy.o
 
 $OBJ -s kernel/kernel >kernel/kernel.map
 

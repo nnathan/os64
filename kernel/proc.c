@@ -30,6 +30,7 @@
 #include "../include/sys/slab.h"
 #include "../include/sys/sched.h"
 #include "../include/sys/proc.h"
+#include "../include/sys/seg.h"
 
 struct slab proc_slab;
 
@@ -126,6 +127,49 @@ proc_alloc()
     proc_kstack(new);
 
     return new;
+}
+
+/* fork process. returns the pid of the child to the parent, 0 to the child. */
+
+pid_t
+fork()
+{
+    struct proc *parent = this()->curproc;
+    struct proc *child;
+    unsigned long addr;
+    int i;
+    pid_t pid;
+
+    child = proc_alloc();
+    pid = child->pid;
+
+    child->flags = parent->flags;
+    child->priority = parent->priority;
+    child->tokens = parent->tokens;
+
+    if (save(parent))
+        return 0;   /* child */
+
+    /* copy kernel stack. we'll refactor this when we actually
+       have user addresses beyond the kernel stack to copy.. */
+
+    addr = KSTACK_TOP;
+
+    for (i = 0; i < KSTACK_PAGES; ++i) {
+        char *src;
+        char *dst;
+
+        addr -= PAGE_SIZE;
+        src = page_phys(parent, addr);
+        dst = page_phys(child, addr);
+
+        bcopy(src, dst, PAGE_SIZE);
+    }
+
+    bcopy(&parent->cpu, &child->cpu, sizeof(parent->cpu));
+    run(child);
+
+    return pid;
 }
 
 /* vi: set ts=4 expandtab: */

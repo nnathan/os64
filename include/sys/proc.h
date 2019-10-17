@@ -52,6 +52,7 @@ struct proc
     int priority;                       /* scheduling priority: PRIORITY_* */
     char *channel;                      /* event sleeping on */
     token_t tokens;                     /* all held (or required) tokens */
+
     LIST_HEAD(,pmap) pte_pages;         /* pages allocated for page tables */
     TAILQ_ENTRY(proc) all_links;        /* all_procs */
     TAILQ_ENTRY(proc) q_links;          /* runq[] or sleepq[] */
@@ -63,6 +64,7 @@ extern struct proc proc0;
 extern struct slab proc_slab;
 
 struct proc *proc_alloc();
+extern pid_t fork();
 
 #endif /* _KERNEL */
 
