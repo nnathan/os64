@@ -228,14 +228,6 @@ restart64:      xor eax, eax                    ; data segments are null
                 mov fs, ax
                 mov gs, ax
 
-                ; initialize sane FPU state and mark it 'dirty'
-                ; so the first save() will dump it, and thus it
-                ; will become the seed state for all procs.
-
-                fninit
-                ldmxcsr dword [mxcsr]
-                clts
-
                 ; load per-CPU registers: TSS and GS base registers
 
                 mov ax, word [_boot_tr]
@@ -252,9 +244,6 @@ restart64:      xor eax, eax                    ; data segments are null
                 call qword [_boot_entry]        ; and enter kernel!
                 cli                             ; should never return ..
 whoops:         jmp whoops
-
-.align 4
-mxcsr:          .dword 0x1dc0   ; ignore all exceptions except division-by-zero
 
 .global _main
 .global _boot_entry

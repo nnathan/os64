@@ -100,6 +100,42 @@ _resume:        mov rdx, qword [rsp, 8]             ; 'proc'
                 mov eax, 1
                 jmp rdx
 
+; fpu_load() - load the process FPU state from process struct
+
+.global _fpu_load
+_fpu_load:      pushfq
+                cli
+
+                seg gs
+                mov rdx, qword [TSS_CURPROC]
+
+                clts
+                fxrstor qword [rdx, PROC_FXSAVE]
+
+                popfq
+                ret
+
+; fpu_init() - initialize FPU state
+;
+; at boot, each CPU needs to initialize its FPU and mark it "dirty",
+; because their process structs have invalid FPU state in them. all
+; other processes will inherit "good" FPU state from their parents,
+; which is directly or indirectly inherited from this initialization.
+
+.global _fpu_init
+_fpu_init:      pushfq
+                cli
+
+                clts
+                fninit
+                ldmxcsr dword [mxcsr]
+
+                popfq
+                ret
+
+.align 4
+mxcsr:          .dword 0x1dc0 ; all exceptions ignored except division-by-zero
+
 ; struct tss *this() - return a pointer to this CPU's TSS
 
 .global _this

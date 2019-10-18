@@ -38,7 +38,7 @@
 static
 ap()
 {
-    struct tss *tss;
+    fpu_init();
 
     printf("AP %d started\n", lapic_id());
 
@@ -113,6 +113,7 @@ bsp()
     struct proc *proc;
     int i;
 
+    fpu_init();
     slab_init(&proc_slab, sizeof(struct proc));
 
     apic_init();        /* disables all interrupt sources */
