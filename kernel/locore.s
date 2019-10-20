@@ -449,7 +449,7 @@ idt:    ; processor-defined traps
 
         ; miscellaneous system vectors here
 
-        .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xF0
+        .word tick, 0x18, 0x8e00, 0, 0, 0, 0, 0         ; VECTOR_TICK
         .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xF1
         .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xF2
         .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xF3
@@ -464,112 +464,176 @@ idt:    ; processor-defined traps
         .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xFC
         .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xFD
         .word 0, 0, 0, 0, 0, 0, 0, 0                    ; 0xFE
-        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; 0xFF - APIC spurious
+        .word spurious, 0x18, 0x8e00, 0, 0, 0, 0, 0     ; VECTOR_SPURIOUS
 
 idt_ptr:        .word idt_ptr-idt-1
                 .dword idt
 
 .bits 64
+.global _trap
 
 trap_0:         push 0                  ; fake code
-                push 0                  ; type 0
-                jmp trap
+                push _trap
+                push 0                  ; number 0
+                jmp vector
 trap_1:         push 0
+                push _trap
                 push 1
-                jmp trap
+                jmp vector
 trap_2:         push 0
+                push _trap
                 push 2
-                jmp trap
+                jmp vector
 trap_3:         push 0
+                push _trap
                 push 3
-                jmp trap
+                jmp vector
 trap_4:         push 0
+                push _trap
                 push 4
-                jmp trap
+                jmp vector
 trap_5:         push 0
+                push _trap
                 push 5
-                jmp trap
+                jmp vector
 trap_6:         push 0
+                push _trap
                 push 6
-                jmp trap
+                jmp vector
 trap_7:         push 0
+                push _trap
                 push 7
-                jmp trap
+                jmp vector
 trap_8:         ; CPU-provided
+                push _trap
                 push 8
-                jmp trap
+                jmp vector
 trap_9:         push 0
+                push _trap
                 push 9
-                jmp trap
+                jmp vector
 trap_10:        ; CPU-provided
+                push _trap
                 push 10
-                jmp trap
+                jmp vector
 trap_11:        ; CPU-provided
+                push _trap
                 push 11
-                jmp trap
+                jmp vector
 trap_12:        ; CPU-provided
+                push _trap
                 push 12
-                jmp trap
+                jmp vector
 trap_13:        ; CPU-provided
+                push _trap
                 push 13
-                jmp trap
+                jmp vector
 trap_14:        ; CPU-provided
+                push _trap
                 push 14
-                jmp trap
+                jmp vector
 trap_15:        push 0
+                push _trap
                 push 15
-                jmp trap
+                jmp vector
 trap_16:        push 0
+                push _trap
                 push 16
-                jmp trap
+                jmp vector
 trap_17:        ; CPU-provided
+                push _trap
                 push 17
-                jmp trap
+                jmp vector
 trap_18:        push 0
+                push _trap
                 push 18
-                jmp trap
+                jmp vector
 trap_19:        push 0
+                push _trap
                 push 19
-                jmp trap
+                jmp vector
 trap_20:        push 0
+                push _trap
                 push 20
-                jmp trap
+                jmp vector
 trap_21:        push 0
+                push _trap
                 push 21
-                jmp trap
+                jmp vector
 trap_22:        push 0
+                push _trap
                 push 22
-                jmp trap
+                jmp vector
 trap_23:        push 0
+                push _trap
                 push 23
-                jmp trap
+                jmp vector
 trap_24:        push 0
+                push _trap
                 push 24
-                jmp trap
+                jmp vector
 trap_25:        push 0
+                push _trap
                 push 25
-                jmp trap
+                jmp vector
 trap_26:        push 0
+                push _trap
                 push 26
-                jmp trap
+                jmp vector
 trap_27:        push 0
+                push _trap
                 push 27
-                jmp trap
+                jmp vector
 trap_28:        push 0
+                push _trap
                 push 28
-                jmp trap
+                jmp vector
 trap_29:        push 0
+                push _trap
                 push 29
-                jmp trap
+                jmp vector
 trap_30:        push 0
+                push _trap
                 push 30
-                jmp trap
+                jmp vector
 trap_31:        push 0
+                push _trap
                 push 31
-                jmp trap
+                jmp vector
 
-trap:           jmp trap
+.global _tick
+tick:           push 0
+                push _tick
+                push 0
+                jmp vector
 
+.global _exit
+
+vector:         push rcx
+                push rdx
+                push rax
+                push rbx
+
+                mov ecx, IA32_KERNEL_GS_BASE
+                rdmsr
+                mov ecx, IA32_GS_BASE
+                wrmsr
+
+                push rsp                    ; struct vector *
+                call qword [rsp, 48]        ; requested handler
+                pop rax
+
+                mov rax, qword [rsp, 64]    ; interrupted CS
+                and eax, 3                  ; check privilege level
+                jz exit                     ; if it was kernel mode, skip
+
+                call _exit  ; do "exiting to user mode" stuff
+
+exit:           pop rbx
+                pop rax
+                pop rdx
+                pop rcx
+                add rsp, 24                 ; discard number, handler, code
 spurious:       iretq
 
 ;

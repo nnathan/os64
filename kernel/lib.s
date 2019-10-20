@@ -209,4 +209,10 @@ _unspin:        mov dword [spin_lock], 0
                 sti
                 ret
 
+; wait() - idle until the processor gets an external interrupt
+
+.global _wait
+_wait:          hlt
+                ret
+
 ; vi: set ts=4 expandtab:

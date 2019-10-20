@@ -25,6 +25,8 @@
 #ifndef _SYS_PARAM_H
 #define _SYS_PARAM_H
 
+#define HZ          100             /* frequency of scheduler ticks */
+
 #define PAGE_SIZE   4096            /* bytes per page */
 #define PAGE_SHIFT  12              /* log2(PAGE_SIZE) */
 

@@ -28,6 +28,7 @@
 #include "../include/sys/page.h"
 #include "../include/sys/sched.h"
 #include "../include/sys/proc.h"
+#include "../include/sys/vector.h"
 
 /* local APIC definitions. for now, we use it in xAPIC (memory-mapped) mode;
    until the compiler supports inline asm this is faster than MSR access. */
@@ -48,10 +49,15 @@
 #define LAPIC_LINT0_LVT     0x35        /* local interrupt pin 0 */
 #define LAPIC_LINT1_LVT     0x36        /* local interrupt pin 1 */
 #define LAPIC_ERROR_LVT     0x37        /* internal error */
+#define LAPIC_TIMER_ICR     0x38        /* timer initial count */
+#define LAPIC_TIMER_CCR     0x39        /* timer current count */
+#define LAPIC_TIMER_DCR     0x3E        /* timer divider configuration */
 
 #define LAPIC_LVT_MASK      0x00010000  /* common to *_LVT: LVT is masked */
+#define LAPIC_LVT_PERIODIC  0x00020000  /* timer LVT only: periodic */
 #define LAPIC_SPUR_ENABLE   0x00000100  /* APIC enable bit */
 #define LAPIC_ICRLO_BUSY    0x00001000  /* IPI delivery in progress */
+#define LAPIC_TIMER_DCR_128 0x0000000B  /* divide by 128 */
 
 #define LAPIC_ICR_IPI_OTHERS    0x000C4000  /* regular IPI to other CPUs */
 #define LAPIC_ICR_IPI_INIT      0x00004500  /* init IPI to target CPU */
@@ -62,6 +68,13 @@
 lapic_id()
 {
     return LAPIC_READ(LAPIC_ID) >> 24;
+}
+
+/* send an EOI */
+
+lapic_eoi()
+{
+    LAPIC_WRITE(LAPIC_EOI, 0);
 }
 
 /* called by each CPU during startup. this is probably overly pedantic, as
@@ -82,6 +95,29 @@ lapic_init()
     LAPIC_WRITE(LAPIC_ERROR_LVT, LAPIC_LVT_MASK);
 
     LAPIC_WRITE(LAPIC_EOI, 0);      /* clear any pending interrupt */
+}
+
+/* called by each processor to start periodic scheduling interrupts */
+
+lapic_ticker()
+{
+    static unsigned count;  /* timer ICR value to interrupt at 'HZ' Hz */
+
+    LAPIC_WRITE(LAPIC_TIMER_DCR, LAPIC_TIMER_DCR_128);
+
+    if (count == 0) {
+        /* the BSP must determine the APIC's (rough) frequency.
+           we use the pair of epoch() calls to delay a second. */
+
+        epoch();
+        LAPIC_WRITE(LAPIC_TIMER_ICR, 0xFFFFFFFF);
+        epoch();
+        count = 0xFFFFFFFF - LAPIC_READ(LAPIC_TIMER_CCR);
+        count /= HZ;
+    }
+
+    LAPIC_WRITE(LAPIC_TIMER_LVT, LAPIC_LVT_PERIODIC | VECTOR_TICK);
+    LAPIC_WRITE(LAPIC_TIMER_ICR, count);
 }
 
 /* internal use only, for lapic_startcpu() and lapic_schedipi() */

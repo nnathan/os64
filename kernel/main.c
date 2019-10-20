@@ -38,12 +38,15 @@
 static
 ap()
 {
+    boot_flag = 1;
+
     fpu_init();
 
     printf("AP %d started\n", lapic_id());
 
     lapic_init();
-    boot_flag = 1;
+    lapic_ticker();
+
     idle();
 }
 
@@ -119,11 +122,12 @@ bsp()
     apic_init();        /* disables all interrupt sources */
     sched_init();       /* initialize scheduler qs/lock, enable interrupts */
     release(TOKEN_ALL); /* the scheduler is safe now */
+    lapic_ticker();     /* so we can start scheduling ticks */
 
     acpi_init();
     start_aps();
 
-    panic("done");
+    idle();
 }
 
 /* the BSP enters the kernel at main(), on the trampoline stack,

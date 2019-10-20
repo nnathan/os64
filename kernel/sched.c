@@ -279,9 +279,23 @@ struct proc *proc;
     unspin();
 }
 
+/* the idle loop entered (ultimately) by all idle threads. order is
+   important: preempt() is first because the APs will get here with
+   interrupts disabled. if wait() is first they'll never wake up. */
+
 idle()
 {
-    for (;;) preempt();
+    for (;;) {
+        preempt();
+        wait();
+    }
+}
+
+/* called out of the local APIC's timer vector 'HZ' times per second. */
+
+tick()
+{
+    lapic_eoi();
 }
 
 /* panic prints a message and halts the system. this is considered part of

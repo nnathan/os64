@@ -1,4 +1,4 @@
-/* Copyright (c) 2019 Charles E. Youse (charles@gnuless.org).
+/* Copyright (c) 2018 Charles E. Youse (charles@gnuless.org).
    All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -22,45 +22,20 @@
  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef _SYS_SCHED_H
-#define _SYS_SCHED_H
+#include "../include/sys/vector.h"
 
-/*
- * serializing tokens (max 64)
- */
+trap(vector)
+struct vector *vector;
+{
+    printf("trap %d (code 0x%x)\n", vector->number, vector->code);
+    printf("CS=%x RIP=%x RFLAGS=%x", vector->cs, vector->rip, vector->rflags);
+    printf("SS=%x RSP=%x\n", vector->ss, vector->rsp);
 
-typedef unsigned long token_t; 
+    panic("unexpected trap");
+}
 
-#define TOKEN(x)        ((x) << 1L)     /* token builder: 0 <= x <= 63 */
-
-#define TOKEN_PMAP      TOKEN(0)        /* page allocation/deallocation */
-#define TOKEN_SLAB      TOKEN(1)        /* slab allocation/deallocation */
-#define TOKEN_PROC      TOKEN(2)        /* global process information */
-
-#define TOKEN_ALL       (-1L)
-
-/* Process priorities: lower number means higher priority. */
-
-#define PRIORITY_TTY        0           /* serial device ISRs */
-#define PRIORITY_NET        1           /* network device ISRs */
-#define PRIORITY_BLOCK      2           /* block device ISRs */
-#define PRIORITY_USER       3           /* user processes */
-#define PRIORITY_IDLE       4           /* idle processes: always lowest */
-
-#define NR_RUNQS           (PRIORITY_IDLE + 1)
-
-/* Number of sleep queues. This is the number of hash buckets for 'channel'. */
-
-#define NR_SLEEPQS          64          /* max is 64 (bits in qword) */
-
-#ifdef _KERNEL
-
-extern token_t acquire();
-extern long lock();
-extern resume();
-
-#endif /* _KERNEL */
-
-#endif /* _SYS_SCHED_H */
+exit()
+{
+}
 
 /* vi: set ts=4 expandtab: */
