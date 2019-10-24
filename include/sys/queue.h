@@ -80,6 +80,8 @@ struct {                                                                    \
     struct type **le_prev;  /* address of previous next element */          \
 }
 
+#define LIST_HEAD_INITIALIZER(head) { NULL }
+
 /*
  * List functions.
  */
@@ -141,6 +143,8 @@ struct name {                                                               \
 struct {                                                                    \
     struct type *sle_next;  /* next element */                              \
 }
+
+#define SLIST_HEAD_INITIALIZER(head) { NULL }
 
 /*
  * Singly-linked List functions.
