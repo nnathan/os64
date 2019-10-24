@@ -32,7 +32,7 @@
 #include "../include/sys/proc.h"
 #include "../include/sys/seg.h"
 
-struct slab proc_slab;
+struct slab proc_slab = SLAB_INITIALIZER(proc_slab, sizeof(struct proc));
 
 /* these globals are protected by TOKEN_PROC */
 

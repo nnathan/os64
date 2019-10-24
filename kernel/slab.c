@@ -30,20 +30,6 @@
 #include "../include/sys/page.h"
 #include "../include/sys/sched.h"
 
-/* must be called on a 'struct slab' before it's used for allocations. */
-
-slab_init(slab, obj_size)
-struct slab *slab;
-{
-    slab->obj_size = 0;
-
-    while (slab->obj_size < obj_size)   /* we don't check for callers ... */
-        slab->obj_size += SLAB_MIN;     /* ... who use ridiculous 'obj_size' */
-
-    slab->per_page = (PAGE_SIZE / slab->obj_size) - 1;  /* -1 for header */
-    LIST_INIT(&slab->page_list);
-}
-
 /* allocate an object from 'slab'. */
 
 char *
@@ -69,10 +55,10 @@ struct slab *slab;
         LIST_INIT(&page->free_list);
         LIST_INSERT_HEAD(&slab->page_list, page, page_links);
 
-        free = (struct slab_free *) page;
+        free = (struct slab_free *) (((char *) page) + SLAB_MIN);
         for (i = 0; i < slab->per_page; ++i) {
-            free = (struct slab_free *) (((char *) free) + slab->obj_size);
             LIST_INSERT_HEAD(&page->free_list, free, free_links);
+            free = (struct slab_free *) (((char *) free) + slab->obj_size);
         }
     }
 

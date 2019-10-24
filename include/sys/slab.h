@@ -45,7 +45,25 @@ struct slab
     LIST_HEAD(,slab_page) page_list;
 };
 
-/* every page allocated in the slab has a struct 'slab_page' header. */
+/* the actual storage size of objects of 'size' in a slab */
+
+#define SLAB_OBJ_SIZE(size) (((size + (SLAB_MIN - 1)) / SLAB_MIN) * SLAB_MIN)
+
+/* the number of objects of 'size' that fit in one slab page */
+
+#define SLAB_PER_PAGE(size) ((PAGE_SIZE - SLAB_MIN) / SLAB_OBJ_SIZE(size))
+
+/* a static initializer for 'struct slab' */
+
+#define SLAB_INITIALIZER(slab, size) \
+    { \
+        SLAB_OBJ_SIZE(size), \
+        SLAB_PER_PAGE(size), \
+        LIST_HEAD_INITIALIZER(&(slab)->page_list) \
+    }
+
+/* every page allocated in the slab has a struct 'slab_page'
+   which occupies the first SLAB_MIN bytes of the page. */
 
 struct slab_page
 {

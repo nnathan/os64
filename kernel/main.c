@@ -113,12 +113,7 @@ start_aps()
 static
 bsp()
 {
-    struct proc *proc;
-    int i;
-
     fpu_init();
-    slab_init(&proc_slab, sizeof(struct proc));
-
     apic_init();        /* disables all interrupt sources */
     sched_init();       /* initialize scheduler qs/lock, enable interrupts */
     release(TOKEN_ALL); /* the scheduler is safe now */
