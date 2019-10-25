@@ -166,6 +166,7 @@ int entry();
 #define IOAPIC_RTELO_MASK       0x00010000  /* interrupt masked */
 #define IOAPIC_RTELO_LEVEL      0x00008000  /* level-sensitive interrupt */
 #define IOAPIC_RTELO_ACTLOW     0x00002000  /* active-low interrupt */
+#define IOAPIC_RTELO_LOWEST     0x00000100  /* lowest priority delivery mode */
 
 #define IOAPIC_WRITE(r, v) \
     do { \
@@ -183,14 +184,38 @@ int entry();
         unlock(flags); \
     } while(0)
 
-/* disable the RTE at the I/O APIC. this is too slow, but will do for now. */
+/* enable/disable the pin at the I/O APIC. (too slow- should be inline.) */
 
-ioapic_disable(rte)
+ioapic_disable(pin)
 {
     int v;
 
-    IOAPIC_READ(IOAPIC_RTE(rte), v);
-    IOAPIC_WRITE(IOAPIC_RTE(rte), v | IOAPIC_RTELO_MASK);
+    IOAPIC_READ(IOAPIC_RTE(pin), v);
+    v |= IOAPIC_RTELO_MASK;
+    IOAPIC_WRITE(IOAPIC_RTE(pin), v);
+}
+
+ioapic_enable(pin)
+{
+    int v;
+
+    IOAPIC_READ(IOAPIC_RTE(pin), v);
+    v &= ~IOAPIC_RTELO_MASK;
+    IOAPIC_WRITE(IOAPIC_RTE(pin), v);
+}
+
+/* configure the I/O APIC RTE as specified by the flags (ISR_*).
+   interrupts will be delivered to the "lowest priority" CPU */
+
+ioapic_configure(pin, vector, flags)
+{
+    int v;
+
+    v = vector;
+    if (flags & ISR_ACTLOW) v |= IOAPIC_RTELO_ACTLOW;
+    if (flags & ISR_LEVEL) v |= IOAPIC_RTELO_LEVEL;
+    v |= IOAPIC_RTELO_MASK | IOAPIC_RTELO_LOWEST;
+    IOAPIC_WRITE(IOAPIC_RTE(pin), v);
 }
 
 /* called by the BSP during startup. whereas the APs need only initialize

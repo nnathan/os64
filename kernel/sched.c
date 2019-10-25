@@ -54,7 +54,8 @@ static TAILQ_HEAD(,proc) sleepq[NR_SLEEPQS];    /* index by SLEEPQ() */
 
 #define SLEEPQ(channel) ((((unsigned) (channel)) >> 3) % NR_SLEEPQS)
 
-/* place 'proc' at the head or tail of the correct runq[] */
+/* place 'proc' at the head or tail of the correct runq[].
+   these assume the spin lock is held. */
 
 #define SETRUNTAIL(proc) \
     do { \
@@ -67,11 +68,6 @@ static TAILQ_HEAD(,proc) sleepq[NR_SLEEPQS];    /* index by SLEEPQ() */
         TAILQ_INSERT_HEAD(&runq[(proc)->priority], (proc), q_links); \
         runqs |= 1L << (proc)->priority; \
     } while (0)
-
-/* true if a process with a priority higher than the
-   specified priority is waiting in a runq[] */
-
-#define WAITING(priority) (runqs && (bsf(runqs) < (priority)))
 
 /* the CPU/low-level vector-handling code create this stack frame which
    is passed to the higher-level handlers; keep in sync with locore.s. */
@@ -92,6 +88,25 @@ struct vector
                   ss;
 };
 
+/* ISRs are scheduled like other processes; they simply have high priorities.
+   tokens are used to synchronize the ISRs with their "top halves". */
+
+static unsigned long pending;       /* pending ISRs */
+
+struct isr
+{
+    int flags;                  /* ISR_* (see sys/sched.h) */
+    int pin;                    /* if ISR_IOAPIC */
+    token_t token;              /* sychronization token (0 = ISR free) */
+};
+
+static struct isr isrs[NR_ISR_VECTORS];
+
+/* true if a process with a priority higher than the specified priority is
+   (or should be) waiting in a runq[]. assumes spin lock is held. */
+
+#define WAITING(priority) (pending || (runqs && (bsf(runqs) < (priority))))
+
 /* called before scheduling begins. TAILQs require initialization, and
    the spinlock is in non-initialized RAM, so unspin() to set its state.
    as a side effect of unspin(), interrupts will be re-enabled here. */
@@ -106,6 +121,37 @@ sched_init()
     unspin();
 }
 
+/* wake up all processes sleeping on the specified channel */
+
+static
+wakeup1(channel)
+char *channel;
+{
+    int q = SLEEPQ(channel);
+    struct proc *proc, *next;
+
+    proc = TAILQ_FIRST(&sleepq[q]);
+
+    while (proc) {
+        next = TAILQ_NEXT(proc, q_links);
+
+        if (proc->channel == channel) {
+            TAILQ_REMOVE(&sleepq[q], proc, q_links);
+            SETRUNTAIL(proc);
+        }
+
+        proc = next;
+    }
+}
+
+wakeup(channel)
+char *channel;
+{
+    spin();
+    wakeup1(channel);
+    unspin();
+}
+
 /* LOCKED: select the best process to run and switch into it. "best" means
    the highest-priority process who needs only tokens that are free. */
 
@@ -113,22 +159,39 @@ static
 sched()
 {
     struct proc *proc;
-    unsigned long qs;
-    int q;
+    unsigned long bits;
+    int bit;
 
-    qs = runqs;
+    /* first, if there are any pending ISRs then wake
+       up their channels if their tokens are free. */
+
+    bits = pending;
+    while (bits) {
+        bit = bsf(bits);
+
+        if (!(tokens & isrs[bit].token)) {
+            wakeup1(&isrs[bit]);
+            pending &= ~(1L << bit);
+        }
+
+        bits &= ~(1L << bit);
+    }
+
+    /* and now we can select the most eligible process */
+
+    bits = runqs;
     for (;;) {
-        q = bsf(qs);
-        if (q == -1) panic("runq empty");
+        bit = bsf(bits);
+        if (bit == -1) panic("runq empty");
 
-        proc = TAILQ_FIRST(&runq[q]);
+        proc = TAILQ_FIRST(&runq[bit]);
         while (proc) {
             if ((proc->tokens & tokens) == 0) {
                 if (save(this()->curproc))
                     return; /* we've been resumed */
                 else {
-                    TAILQ_REMOVE(&runq[q], proc, q_links);
-                    if (TAILQ_EMPTY(&runq[q])) runqs &= ~(1L << q);
+                    TAILQ_REMOVE(&runq[bit], proc, q_links);
+                    if (TAILQ_EMPTY(&runq[bit])) runqs &= ~(1L << bit);
                     resume(proc);
                 }
             }
@@ -136,7 +199,7 @@ sched()
             proc = TAILQ_NEXT(proc, q_links);
         }
 
-        qs &= ~(1L << q);
+        bits &= ~(1L << bit);
     }
 }
 
@@ -263,31 +326,6 @@ char *channel;
     proc->flags &= ~flags;
 }
 
-/* wake up all processes sleeping on the specified channel */
-
-wakeup(channel)
-char *channel;
-{
-    int q = SLEEPQ(channel);
-    struct proc *proc, *next;
-
-    spin();
-    proc = TAILQ_FIRST(&sleepq[q]);
-
-    while (proc) {
-        next = TAILQ_NEXT(proc, q_links);
-
-        if (proc->channel == channel) {
-            TAILQ_REMOVE(&sleepq[q], proc, q_links);
-            SETRUNTAIL(proc);
-        }
-
-        proc = next;
-    }
-
-    unspin();
-}
-
 /* set a new process runnable. */
 
 run(proc)
@@ -332,9 +370,56 @@ char *msg;
 irq(vector)
 struct vector *vector;
 {
+    struct isr *isr;
+    int i;
+
+    i = vector->number - VECTOR_ISR_BASE;
+    isr = &isr[i];
+
+    if ((isr->flags & (ISR_IOAPIC | ISR_LEVEL)) == (ISR_IOAPIC | ISR_LEVEL))
+        ioapic_disable(isr->pin);
+
+    lapic_eoi();
+
+    spin();
+    pending |= 1 << i;
+    unspin();
 }
 
-/* */
+/* allocate a vector for the specific priority, assign it to the source
+   specified, and start an ISR process invoke the handler function when
+   appropriate. */
+
+isr(priority, flags, pin, fn)
+int (*fn)();
+{
+    token_t token;
+    int vector;
+    int i;
+
+    switch (priority)
+    {
+    case PRIORITY_HIGH:
+        token = TOKEN_HIGH;
+        vector = 0;
+        break;
+    case PRIORITY_TTY:
+        token = TOKEN_TTY;
+        vector = 1 * VECTORS_PER_PRIORITY;
+        break;
+    case PRIORITY_NET:
+        token = TOKEN_NET;
+        vector = 2 * VECTORS_PER_PRIORITY;
+        break;
+    case PRIORITY_BLOCK:
+        token = TOKEN_BLOCK;
+        vector = 3 * VECTORS_PER_PRIORITY;
+        break;
+    }
+}
+
+/* a primitive trap handler. in the future this will take more
+   appropriate action (e.g., deliver a signal, kill the process) */
 
 trap(vector)
 struct vector *vector;
@@ -346,7 +431,8 @@ struct vector *vector;
     panic("unexpected trap");
 }
 
-/* */
+/* called after an interrupt or system call if we're returning to user mode.
+   we'll use this to context switch, or reclaim pages, etc. when necessary */
 
 exit()
 {

@@ -132,7 +132,7 @@ proc_alloc()
 /* fork process. returns the pid of the child to the parent, 0 to the child. */
 
 pid_t
-fork()
+fork(priority)
 {
     struct proc *parent = this()->curproc;
     struct proc *child;
@@ -143,8 +143,8 @@ fork()
     child = proc_alloc();
     pid = child->pid;
 
+    child->priority = priority;
     child->flags = parent->flags;
-    child->priority = parent->priority;
     child->tokens = parent->tokens;
 
     if (save(parent))

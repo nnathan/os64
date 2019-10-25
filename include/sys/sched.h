@@ -25,6 +25,12 @@
 #ifndef _SYS_SCHED_H
 #define _SYS_SCHED_H
 
+/* flags for isr() (and 'struct isr' flags in sched.c) */
+
+#define ISR_IOAPIC      0x00000001      /* source is I/O APIC pin */
+#define ISR_LEVEL       0x00000002      /* source is level-sensitive */
+#define ISR_ACTLOW      0x00000004      /* source is active-low */
+
 /* IDT vector assignments: must match the IDT in locore.s.
    the first 32 vectors are architecturally-defined. */
 
@@ -71,16 +77,21 @@ typedef unsigned long token_t;
 #define TOKEN_PMAP      TOKEN(0)        /* page allocation/deallocation */
 #define TOKEN_SLAB      TOKEN(1)        /* slab allocation/deallocation */
 #define TOKEN_PROC      TOKEN(2)        /* global process information */
+#define TOKEN_HIGH      TOKEN(3)        /* high-priority synchronization */
+#define TOKEN_TTY       TOKEN(4)        /* serial device synchronization */
+#define TOKEN_NET       TOKEN(5)        /* network device synchronization */
+#define TOKEN_BLOCK     TOKEN(6)        /* block device synchronization */
 
 #define TOKEN_ALL       (-1L)
 
 /* Process priorities: lower number means higher priority. */
 
-#define PRIORITY_TTY        0           /* serial device ISRs */
-#define PRIORITY_NET        1           /* network device ISRs */
-#define PRIORITY_BLOCK      2           /* block device ISRs */
-#define PRIORITY_USER       3           /* user processes */
-#define PRIORITY_IDLE       4           /* idle processes: always lowest */
+#define PRIORITY_HIGH       0           /* high-priority ISRs */
+#define PRIORITY_TTY        1           /* serial device ISRs */
+#define PRIORITY_NET        2           /* network device ISRs */
+#define PRIORITY_BLOCK      3           /* block device ISRs */
+#define PRIORITY_USER       4           /* user processes */
+#define PRIORITY_IDLE       5           /* idle processes: always lowest */
 
 #define NR_RUNQS           (PRIORITY_IDLE + 1)
 
