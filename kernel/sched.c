@@ -73,6 +73,25 @@ static TAILQ_HEAD(,proc) sleepq[NR_SLEEPQS];    /* index by SLEEPQ() */
 
 #define WAITING(priority) (runqs && (bsf(runqs) < (priority)))
 
+/* the CPU/low-level vector-handling code create this stack frame which
+   is passed to the higher-level handlers; keep in sync with locore.s. */
+
+struct vector
+{
+    unsigned long rbx,
+                  rax,
+                  rdx,
+                  rcx,
+                  number,
+                  handler,
+                  code,
+                  rip,
+                  cs,
+                  rflags,
+                  rsp,
+                  ss;
+};
+
 /* called before scheduling begins. TAILQs require initialization, and
    the spinlock is in non-initialized RAM, so unspin() to set its state.
    as a side effect of unspin(), interrupts will be re-enabled here. */
@@ -306,6 +325,31 @@ char *msg;
 {
     printf("panic: %s\n", msg);
     for (;;) ;
+}
+
+/* called from locore when interrupt occurs */
+
+irq(vector)
+struct vector *vector;
+{
+}
+
+/* */
+
+trap(vector)
+struct vector *vector;
+{
+    printf("trap %d (code 0x%x)\n", vector->number, vector->code);
+    printf("CS=%x RIP=%x RFLAGS=%x", vector->cs, vector->rip, vector->rflags);
+    printf("SS=%x RSP=%x\n", vector->ss, vector->rsp);
+
+    panic("unexpected trap");
+}
+
+/* */
+
+exit()
+{
 }
 
 /* vi: set ts=4 expandtab: */

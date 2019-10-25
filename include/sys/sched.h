@@ -25,6 +25,41 @@
 #ifndef _SYS_SCHED_H
 #define _SYS_SCHED_H
 
+/* IDT vector assignments: must match the IDT in locore.s.
+   the first 32 vectors are architecturally-defined. */
+
+#define VECTOR_DE           0x00        /* divide-by-zero */
+#define VECTOR_DB           0x01        /* debug */
+#define VECTOR_NMI          0x02        /* non-maskable interrupt */
+#define VECTOR_BP           0x03        /* breakpoint */
+#define VECTOR_OF           0x04        /* overflow */
+#define VECTOR_BR           0x05        /* bound range */
+#define VECTOR_UD           0x06        /* invalid opcode */
+#define VECTOR_NM           0x07        /* device not available */
+#define VECTOR_DF           0x08        /* double fault */
+                                        /* 0x09 RESERVED */
+#define VECTOR_TS           0x0A        /* invalid TSS */
+#define VECTOR_NP           0x0B        /* segment not present */
+#define VECTOR_SS           0x0C        /* stack */
+#define VECTOR_GP           0x0D        /* general protection */
+#define VECTOR_PF           0x0E        /* page fault */
+                                        /* 0x0F RESERVED */
+#define VECTOR_MF           0x10        /* x87 floating-point */
+#define VECTOR_AC           0x11        /* alignment check */
+#define VECTOR_MC           0x12        /* machine check */
+#define VECTOR_XF           0x13        /* SIMD floating point */
+                                        /* 0x14-0x1C RESERVED */
+#define VECTOR_VC           0x1D        /* virtualization event */
+#define VECTOR_SX           0x1E        /* security exception */
+                                        /* 0x1F RESERVED */
+
+#define VECTOR_ISR_BASE     0x20        /* ISR vectors start here */
+#define NR_ISR_VECTORS              64      /* 0x20 - 0x5F */
+#define VECTORS_PER_PRIORITY        16      /* architecturally-defined */
+
+#define VECTOR_TICK         0xF0        /* APIC timer scheduling tick */
+#define VECTOR_SPURIOUS     0xFF        /* APIC was just kidding */
+
 /*
  * serializing tokens (max 64)
  */
